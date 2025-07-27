@@ -9,10 +9,13 @@ class PythonLexer(BaseLexer):
         self.custom_styles:dict = {}
         
         self.tags = ["keyword","builtin","functionName","className","method",
-                     "attribute","number","decorator","constant","string","fstring","comments"]
+                     "attribute","number","decorator","constant","string","fstring","comments","words"]
 
-
-        
+        self.words = {}
+    
+    def add_word_to_highlight(self, word:str, color:str):
+        self.words[word] = color
+        self.editor.tag_configure(word, **color)
 
     def set_custom_styles(self, custom_styles:dict):
         self.custom_styles = custom_styles
@@ -26,6 +29,8 @@ class PythonLexer(BaseLexer):
             "className": {"foreground": "#C678DD"},
             "builtin": {"foreground": "#F122DA"},
             "constant":{"foreground": "#98C379"},
+            "number":{"foreground": "#98C379"},
+            "decorator":{"foreground": "#98C379"},
             "comments": {"foreground": "#5C6370"},
             "string": {"foreground": "#98C379"},
             "fstring": {"foreground": "#864379"},
@@ -46,7 +51,8 @@ class PythonLexer(BaseLexer):
         first = self.editor.index(f"{first_index} -4line")
         last = self.editor.index(f"@0,{self.editor.winfo_height()} +4line")
         code = self.editor.get(first, last)
-
+        for word in self.words:
+            self._highlight(fr'\b{word}\b',word, code, first)
         self._attributes(code, first)
         self._keywords_builtin_methods_class_etc(code, first)
         self._string(self.editor.get('1.0','end'), self.editor.index('1.0'))
@@ -173,7 +179,6 @@ class PythonLexer(BaseLexer):
         snytax: dict = {
             "keyword": r"\b(" + "|".join(keyword.kwlist) + r")\b",
             "builtin": r"\b(" + "|".join(re.escape(name) for name in dir(builtins)) + r")\b",
-            # "attribute": r"(?<!\bfrom\s)(?<!\bimport\s)\.(\w+)",
             "functionName": r"\bdef\s+([a-zA-Z_]\w*)",
             "className": r"\bclass\s+([a-zA-Z_]\w*)",
             "method": r"\b([a-zA-Z_]\w*)\s*(?=\()",  # general function calls

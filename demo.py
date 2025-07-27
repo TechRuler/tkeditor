@@ -18,6 +18,7 @@ lexer.set_custom_styles({
     "functionName":{"foreground":"tomato"},
     "className":{"foreground":"gold"}
 })
+lexer.add_word_to_highlight('self', {"foreground":"#00FFFF"})
 
 
 editor.set_lexer(lexer)
