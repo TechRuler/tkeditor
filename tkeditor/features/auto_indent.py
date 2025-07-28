@@ -4,41 +4,59 @@ class AutoIndent:
     def setup_auto_indent(self):
         self.bind("<Return>", self.auto_indent, add="+")
         self.bind("<BackSpace>", self.backspace, add="+")
+        self.language = "python"  # default
 
-    def set_indentation(self, indent:int):
-        """Set the indentation level for auto-indentation."""
+    def set_language(self, lang: str):
+        self.language = lang.lower()
 
-        if isinstance(indent, int) and indent >= 0:
-            if indent > 0:
-                self.indentation = indent
-            else:
-                raise ValueError("Indentation must be a positive integer.")
+    def set_indentation(self, indent: int):
+        if isinstance(indent, int) and indent > 0:
+            self.indentation = indent
         else:
-            raise TypeError("Indentation must be an integer.")
-        
-        
+            raise ValueError("Indentation must be a positive integer.")
+
     def auto_indent(self, event):
-        """Handle auto-indentation logic."""
         current_line = self.get("insert linestart", "insert")
         match = re.match(r"(\s*)", current_line)
         if match:
             indent = len(match.group(1))
-            if self.get('insert -1c wordstart', 'insert').strip() == ":":
-                indent += self.indentation
-            elif self.get('insert -1c wordstart', 'insert').strip() == "{":
-                indent += self.indentation
+            line_text = current_line.strip()
+
+            # Language-specific block starters
+            if self.language == "python":
+                if line_text.endswith(":"):
+                    indent += self.indentation
+                elif line_text.endswith("{"):
+                    indent += self.indentation
+
+
+            elif self.language in ("c", "cpp", "java", "javascript", "csharp"):
+                if line_text.endswith("{"):
+                    indent += self.indentation
+
+            elif self.language in ("html", "xml"):
+                if re.match(r"<[^/!][^>]*[^/]?>$", line_text):  # opening tag
+                    indent += self.indentation
+
+            elif self.language == "lua":
+                if re.search(r"\b(then|do|function)\b$", line_text):
+                    indent += self.indentation
+
+            elif self.language == "yaml":
+                if line_text.endswith(":"):
+                    indent += self.indentation
+
             self.insert("insert", "\n" + " " * indent)
-            self.see('insert')
+            self.see("insert")
             self.event_generate("<<Redraw>>")
             return "break"
-        self.see('insert')
-        
+        self.see("insert")
+
     def backspace(self, event):
-        """Handle backspace key press to remove indentation if necessary."""
         current_line = self.get("insert linestart", "insert")
         if current_line.isspace() and not self.tag_ranges("sel"):
             if len(current_line) % self.indentation == 0:
-                self.delete("%s-%sc"%("insert", self.indentation), "insert")
+                self.delete(f"insert-{self.indentation}c", "insert")
                 self.event_generate("<<Redraw>>")
                 return "break"
         self.event_generate("<<Redraw>>")

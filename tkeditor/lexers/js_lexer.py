@@ -5,12 +5,19 @@ class JavaScriptLexer(BaseLexer):
     def __init__(self, editor):
         super().__init__(editor)
         self.editor = editor.text
-        self.custom_styles: dict = {}
+        self.custom_styles = {}
 
-        self.tags = ["keyword", "builtin", "functionName", "className", "method",
-                     "attribute", "number", "constant", "string", "template", "comments", "words"]
+        self.__tags = [
+            "keyword", "builtin", "functionName", "className", "method",
+            "attribute", "number", "constant", "string", "comments", "words"
+        ]
 
         self.words = {}
+
+    def style_key(self):
+        tag = self.__tags.copy()
+        tag.remove("words")
+        return tag
 
     def add_word_to_highlight(self, word: str, color: str):
         self.words[word] = color
@@ -21,17 +28,16 @@ class JavaScriptLexer(BaseLexer):
 
     def setup_tags(self):
         default_tags = {
-            "keyword": {"foreground": "#FF9D00"},
-            "builtin": {"foreground": "#F122DA"},
-            "functionName": {"foreground": "#C678DD"},
-            "className": {"foreground": "#C678DD"},
-            "method": {"foreground": "#C678DD"},
             "attribute": {"foreground": "#61AFEF"},
+            "method": {"foreground": "#C678DD"},
+            "functionName": {"foreground": "#C678DD"},
+            "builtin": {"foreground": "#F122DA"},
+            "className": {"foreground": "#C678DD"},
+            "constant": {"foreground": "#98C379"},
             "number": {"foreground": "#98C379"},
-            "constant": {"foreground": "#56B6C2"},
-            "string": {"foreground": "#98C379"},
-            "template": {"foreground": "#C586C0"},
+            "keyword": {"foreground": "#FF9D00"},
             "comments": {"foreground": "#5C6370"},
+            "string": {"foreground": "#98C379"},
         }
 
         for tag, default_config in default_tags.items():
@@ -41,7 +47,7 @@ class JavaScriptLexer(BaseLexer):
             self.editor.tag_configure(tag, **merged_config)
 
     def highlight(self):
-        for tag in self.tags:
+        for tag in self.__tags:
             self.editor.tag_remove(tag, '1.0', 'end')
 
         first_index = self.editor.index("@0,0")
@@ -52,53 +58,42 @@ class JavaScriptLexer(BaseLexer):
         for word in self.words:
             self._highlight(fr'\b{word}\b', word, code, first)
 
-        self._keywords_builtins_constants(code, first)
-        self._functions_classes(code, first)
         self._attributes(code, first)
-        self._strings(code, first)
-        self._template_strings(code, first)
-        self._comments(code, first)
+        self._highlight_core(code, first)
+        self._string(code, first)
+        self._comment(code, first)
 
-    def _keywords_builtins_constants(self, code, first):
-        keywords = r"\b(?:if|else|return|for|while|do|switch|case|break|continue|function|class|new|try|catch|finally|throw|import|export|default|extends|super|in|instanceof|typeof|void|delete|yield|await|async|with|let|const|var)\b"
-        builtins = r"\b(?:console|window|document|Array|Object|Math|Date|String|Number|Boolean|JSON|RegExp|Set|Map|Symbol|Error|Promise|Intl|Reflect)\b"
-        constants = r"\b(?:true|false|null|undefined|NaN|Infinity)\b"
-        numbers = r"\b\d+(\.\d+)?([eE][+-]?\d+)?\b"
-
-        self._highlight(keywords, "keyword", code, first)
-        self._highlight(builtins, "builtin", code, first)
-        self._highlight(constants, "constant", code, first)
-        self._highlight(numbers, "number", code, first)
-
-    def _functions_classes(self, code, first):
-        self._highlight(r"\bfunction\s+([a-zA-Z_$][\w$]*)", "functionName", code, first)
-        self._highlight(r"\bclass\s+([a-zA-Z_$][\w$]*)", "className", code, first)
-        self._highlight(r"\b([a-zA-Z_$][\w$]*)\s*(?=\()", "method", code, first)
-
-    def _attributes(self, code, first):
-        pattern = r"\.([a-zA-Z_$][\w$]*)"
-        for match in re.finditer(pattern, code):
-            start, end = match.span(1)
-            self.editor.tag_add("attribute", f"{first} + {start}c", f"{first} + {end}c")
-
-    def _strings(self, code, first):
-        string_pattern = r"(\"(\\.|[^\"])*\"|'(\\.|[^'])*')"
+    def _string(self, code, first):
+        string_pattern = r'(".*?"|\'.*?\')'
         for match in re.finditer(string_pattern, code):
             start, end = match.span()
             self.editor.tag_add("string", f"{first} + {start}c", f"{first} + {end}c")
 
-    def _template_strings(self, code, first):
-        pattern = r"`(?:\\.|[^`])*`"
-        for match in re.finditer(pattern, code, re.DOTALL):
-            start, end = match.span()
-            self.editor.tag_add("template", f"{first} + {start}c", f"{first} + {end}c")
-
-    def _comments(self, code, first):
-        # Single-line and multi-line comments
-        pattern = r"//.*?$|/\*[\s\S]*?\*/"
-        for match in re.finditer(pattern, code, re.MULTILINE):
+    def _comment(self, code, first):
+        comment_pattern = r'//.*?$|/\*.*?\*/'
+        for match in re.finditer(comment_pattern, code, re.DOTALL | re.MULTILINE):
             start, end = match.span()
             self.editor.tag_add("comments", f"{first} + {start}c", f"{first} + {end}c")
+
+    def _highlight_core(self, code, first):
+        syntax = {
+            "keyword": r"\b(const|let|var|if|else|for|while|function|return|switch|case|break|continue|class|extends|super|try|catch|finally|throw|new|in|instanceof|typeof|void|delete|await|async|yield|import|export|default|from|as)\b",
+            "builtin": r"\b(Array|Boolean|Date|Error|Function|JSON|Math|Number|Object|Promise|RegExp|String|Symbol|Map|Set|WeakMap|WeakSet|BigInt)\b",
+            "functionName": r"\bfunction\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+            "className": r"\bclass\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+            "method": r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()",
+            "number": r"\b\d+(\.\d+)?\b",
+            "constant": r"\b(true|false|null|undefined|NaN|Infinity)\b"
+        }
+
+        for tag, pattern in syntax.items():
+            self._highlight(pattern, tag, code, first)
+
+    def _attributes(self, code, first):
+        attribute_pattern = r"\.([a-zA-Z_][a-zA-Z0-9_]*)"
+        for match in re.finditer(attribute_pattern, code):
+            start, end = match.span(1)
+            self.editor.tag_add("attribute", f"{first} + {start}c", f"{first} + {end}c")
 
     def _highlight(self, pattern, tag, code, first):
         for match in re.finditer(pattern, code):
@@ -108,4 +103,6 @@ class JavaScriptLexer(BaseLexer):
             else:
                 start_idx = match.start()
                 end_idx = match.end()
-            self.editor.tag_add(tag, f"{first} + {start_idx}c", f"{first} + {end_idx}c")
+            start = self.editor.index(f"{first} + {start_idx}c")
+            end = self.editor.index(f"{first} + {end_idx}c")
+            self.editor.tag_add(tag, start, end)

@@ -8,10 +8,15 @@ class PythonLexer(BaseLexer):
         self.editor = editor.text
         self.custom_styles:dict = {}
         
-        self.tags = ["keyword","builtin","functionName","className","method",
-                     "attribute","number","decorator","constant","string","fstring","comments","words"]
+        self.__tags = ["keyword","builtin","functionName","className","method","string_prefix",
+                     "attribute","number","decorator","constant","string","comments","bracketss","words"]
+        
 
         self.words = {}
+    def style_key(self):
+        tag = self.__tags
+        tag.remove("words")
+        return tag
     
     def add_word_to_highlight(self, word:str, color:str):
         self.words[word] = color
@@ -19,21 +24,23 @@ class PythonLexer(BaseLexer):
 
     def set_custom_styles(self, custom_styles:dict):
         self.custom_styles = custom_styles
-    
+
     def setup_tags(self):
         default_tags = {
-            "keyword": {"foreground": "#FF9D00"},
+            "string_prefix": {"foreground": "#FF9D00"},
             "attribute": {"foreground": "#61AFEF"},
             "method": {"foreground": "#C678DD"},
             "functionName": {"foreground": "#C678DD"},
-            "className": {"foreground": "#C678DD"},
             "builtin": {"foreground": "#F122DA"},
-            "constant":{"foreground": "#98C379"},
+            "className": {"foreground": "#C678DD"},
+            "brackets": {"foreground": "#61AFEF"},
             "number":{"foreground": "#98C379"},
+            "operator":{"foreground": "#98C379"},
             "decorator":{"foreground": "#98C379"},
+            "keyword": {"foreground": "#FF9D00"},
+            "constant":{"foreground": "#98C379"},
             "comments": {"foreground": "#5C6370"},
             "string": {"foreground": "#98C379"},
-            "fstring": {"foreground": "#864379"},
         }
 
         for tag, default_config in default_tags.items():
@@ -44,7 +51,7 @@ class PythonLexer(BaseLexer):
     
     def highlight(self):
         # Get the visible code range
-        for tag in self.tags:
+        for tag in self.__tags:
             self.editor.tag_remove(tag, '1.0', 'end')
         
         first_index = self.editor.index("@0,0")
@@ -56,107 +63,70 @@ class PythonLexer(BaseLexer):
         self._attributes(code, first)
         self._keywords_builtin_methods_class_etc(code, first)
         self._string(self.editor.get('1.0','end'), self.editor.index('1.0'))
-        self._fstrings(self.editor.get('1.0','end'), self.editor.index('1.0'))
         self._comment(code, first)
 
 
-        
+
     def _string(self, code: str, first: str):
-        
-        lines = code.split('\n')
-        line_offsets = []
-        offset = 0
-        for line in lines:
-            line_offsets.append(offset)
-            offset += len(line) + 1  # +1 for \n
+        # Step 1: Detect all comment spans
+        comment_spans = []
+        for m in re.finditer(r"#.*", code):
+            comment_spans.append(m.span())
 
-        def is_in_comment(pos: int) -> bool:
-            line_num = code[:pos].count('\n')
-            line = lines[line_num]
-            line_offset = line_offsets[line_num]
-            hash_index = line.find("#")
-            return 0 <= hash_index < (pos - line_offset)
+        def is_in_comment(start, end):
+            for c_start, c_end in comment_spans:
+                if start >= c_start and end <= c_end:
+                    return True
+            return False
 
-        string_spans = []
+        # Step 2: Define all string regexes
+        stringprefix = r"(?i:r|u|f|fr|rf|b|br|rb)?"
+        sq3 = stringprefix + r"'''(?:[^\\]|\\.|\\\n)*?(?:'''|$)"
+        dq3 = stringprefix + r'"""(?:[^\\]|\\.|\\\n)*?(?:"""|$)'
+        sq = stringprefix + r"'(?:[^'\\\n]|\\.)*'?"
+        dq = stringprefix + r'"(?:[^"\\\n]|\\.)*"?'
+        string_pattern = f"{sq3}|{dq3}|{sq}|{dq}"
 
-        # 1. Highlight real triple-quoted strings (multiline allowed)
-        triple_pattern = r"('''.*?'''|\"\"\".*?\"\"\")"
-        for match in re.finditer(triple_pattern, code, re.DOTALL):
+        for match in re.finditer(string_pattern, code, re.DOTALL):
             start, end = match.span()
-            if is_in_comment(start):
+            text = match.group()
+            
+
+            # Step 3: If string is inside comment, skip
+            if is_in_comment(start, end):
                 continue
-            # Skip if this triple quote is inside a single/double-quoted string like `"'''"`
-            prefix_area = code[max(0, start - 3):start]
-            if '"' in prefix_area or "'" in prefix_area:
-                continue
-            string_spans.append((start, end))
-            self.editor.tag_add("string", f"{first} + {start}c", f"{first} + {end}c")
 
-        # 2. Highlight single-line quoted strings (not triple-quoted)
-        single_pattern = r'(?<!["\'])("([^"\\\n]|\\.)*?"|\'([^\'\\\n]|\\.)*?\')'
-        for match in re.finditer(single_pattern, code):
-            start, end = match.span()
-            if is_in_comment(start):
-                continue
-            # Skip if inside triple-quoted strings
-            if any(s <= start < e for s, e in string_spans):
-                continue
-            string_spans.append((start, end))
-            self.editor.tag_add("string", f"{first} + {start}c", f"{first} + {end}c")
-
-        # 3. Highlight unterminated strings on single line (but skip lines with triple quotes)
-        offset = 0
-        for line in lines:
-            if "'''" in line or '"""' in line:
-                offset += len(line) + 1
-                continue
-            for qt in ("'", '"'):
-                if line.count(qt) % 2 == 1:
-                    quote_index = line.find(qt)
-                    abs_start = offset + quote_index
-                    if not is_in_comment(abs_start) and not any(s <= abs_start < e for s, e in string_spans):
-                        self.editor.tag_add("string",
-                                            f"{first} + {abs_start}c",
-                                            f"{first} + {offset + len(line)}c")
-            offset += len(line) + 1
+            # Step 4: Handle f-strings
+            prefix_match = re.match(r"(?i)(f|fr|rf)", text)
+            if prefix_match:
+                string_body = text[prefix_match.end():]
+                base_pos = start + prefix_match.end()
+                pos = 0
+                depth = 0
+                part_start = 0
+                while pos < len(string_body):
+                    if string_body[pos] == '{':
+                        if depth == 0 and pos > part_start:
+                            s = base_pos + part_start
+                            e = base_pos + pos
+                            if not is_in_comment(s, e):
+                                self.editor.tag_add("string", f"{first} + {s}c", f"{first} + {e}c")
+                        depth += 1
+                        part_start = pos + 1
+                    elif string_body[pos] == '}':
+                        depth -= 1
+                        if depth == 0:
+                            part_start = pos + 1
+                    pos += 1
+                if part_start < len(string_body) and depth == 0:
+                    s = base_pos + part_start
+                    e = base_pos + len(string_body)
+                    if not is_in_comment(s, e):
+                        self.editor.tag_add("string", f"{first} + {s}c", f"{first} + {e}c")
+            else:
+                self.editor.tag_add("string", f"{first} + {start}c", f"{first} + {end}c")
 
 
-
-    def _fstrings(self, code: str, first: str):
-        lines = code.split('\n')
-        line_offsets = []
-        offset = 0
-        for line in lines:
-            line_offsets.append(offset)
-            offset += len(line) + 1
-
-        def is_in_comment(pos: int) -> bool:
-            line_num = code[:pos].count('\n')
-            line = lines[line_num]
-            line_offset = line_offsets[line_num]
-            hash_index = line.find("#")
-            return 0 <= hash_index < (pos - line_offset)
-
-        def tag_range(tag: str, start: int, end: int):
-            self.editor.tag_add(tag, f"{first} + {start}c", f"{first} + {end}c")
-
-        # Match f-strings (both single-line and triple-quoted)
-        fstring_pattern = r'''(?ix)       # ignore case, allow comments
-            (?<![a-zA-Z0-9_])             # not part of identifier
-            (f|rf|fr)                     # f-string prefix
-            (                             # group 2: quote block
-            (''' + r"'''(?:\\.|[^\\])*?'''" + r''')   # triple-single
-            | ("""(?:\\.|[^\\])*?""")     # triple-double
-            | ('(?:\\.|[^\\'\n])*?')      # single
-            | ("(?:\\.|[^\\\"\n])*?")     # double
-            )
-        '''
-
-        for match in re.finditer(fstring_pattern, code, re.DOTALL):
-            start, end = match.span()
-            if is_in_comment(start):
-                continue
-            tag_range("fstring", start, end)
     def _comment(self, code, first):
         # Step 1: collect spans of strings (so we can ignore them)
         string_pattern = r"'''(?:\\.|[^\\])*?'''|\"\"\"(?:\\.|[^\\])*?\"\"\"|\"(?:\\.|[^\\\"\n])*?\"|'(?:\\.|[^\\'\n])*?'"
@@ -176,15 +146,30 @@ class PythonLexer(BaseLexer):
             if not is_inside_string(start):
                 self.editor.tag_add("comments", f"{first} + {start}c", f"{first} + {end}c +1c")
     def _keywords_builtin_methods_class_etc(self, code, first):
+        all_builtins = dir(builtins)
+
+        # Remove __dunder__ names and keywords
+        filtered_builtins = [
+            name for name in all_builtins
+            if not (name.startswith("__") and name.endswith("__")) and name not in keyword.kwlist
+        ]
+        keywords = list(keyword.kwlist)
+        keywords.remove('True')
+        keywords.remove('False')
+        keywords.remove('None')
+        keywords.append('self')
         snytax: dict = {
-            "keyword": r"\b(" + "|".join(keyword.kwlist) + r")\b",
-            "builtin": r"\b(" + "|".join(re.escape(name) for name in dir(builtins)) + r")\b",
+            "keyword": r"\b(" + "|".join(keywords) + r")\b",
+            "string_prefix":r"(?i)\b(r|u|f|fr|rf|b|br|rb)(?=['\"])",
+            "method": r"\b([a-zA-Z_]\w*)\s*(?=\()",  # general function calls
             "functionName": r"\bdef\s+([a-zA-Z_]\w*)",
             "className": r"\bclass\s+([a-zA-Z_]\w*)",
-            "method": r"\b([a-zA-Z_]\w*)\s*(?=\()",  # general function calls
+            "builtin": r"\b(" + "|".join(re.escape(name) for name in filtered_builtins) + r")\b",
+            "brackets":r"[\(\)\[\]\{\}]",
+            "operator":r"[\*\+\-\/=]",
             "number": r"\b\d+(\.\d+)?\b",
             "decorator": r"@(\w+)",
-            "constant": r"\b(True|False|None)\b"
+            "constant": r"\b(True|False|None|[A-Z_]{2,})\b"
         }
         for tag, pattern in snytax.items():
             self._highlight(pattern, tag, code, first)

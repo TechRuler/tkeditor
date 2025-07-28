@@ -12,7 +12,16 @@ class CustomText(Text, AutoIndent, TabHandler, ContextMenu, Config):
         self.setup_tab_handler()      
         self.setup_context_menu()     
 
+        super().bind('<Key>', self.brackets_and_string_complete, add="+")
+
     
+    def brackets_and_string_complete(self, event):
+        char = event.char
+        brackets = {"[":"]","(":")","{":"}","'":"'",'"':'"'}
+        if char in brackets.keys():
+            self.mark_gravity('insert','left')
+            self.insert('insert', brackets[char])
+            self.mark_gravity('insert','right')
 
 
     def bind(self, sequence=None, func=None, add=None):
