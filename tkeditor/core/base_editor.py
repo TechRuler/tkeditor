@@ -1,18 +1,17 @@
 from tkinter import Text
 from tkeditor.features.auto_indent import AutoIndent
-from tkeditor.features.tab_handler import TabHandler
 from tkeditor.features.context_menu import ContextMenu
 from tkeditor.core.init_config import Config
-class CustomText(Text, AutoIndent, TabHandler, ContextMenu, Config):
+class CustomText(Text, AutoIndent, ContextMenu, Config):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
 
         self.setup_config()           
-        self.setup_auto_indent()      
-        self.setup_tab_handler()      
+        self.setup_auto_indent()        
         self.setup_context_menu()     
 
         super().bind('<Key>', self.brackets_and_string_complete, add="+")
+        super().bind("<Tab>", self._handle_tab, add="+")
 
     
     def brackets_and_string_complete(self, event):
@@ -23,6 +22,20 @@ class CustomText(Text, AutoIndent, TabHandler, ContextMenu, Config):
             self.insert('insert', brackets[char])
             self.mark_gravity('insert','right')
 
+    def set_tabWidth(self, width:int):
+        """Set the tab width for the editor."""
+        if isinstance(width, int) and width >= 0:
+            if width > 0:
+                self.tab_width = width
+            else:
+                raise ValueError("Tab width must be a positive integer.")
+        else:
+            raise TypeError("Tab width must be an integer.")
+        
+    def _handle_tab(self, event):
+        """Handle tab key press for indentation."""
+        self.insert("insert", " " * self.tab_width)
+        return "break"
 
     def bind(self, sequence=None, func=None, add=None):
         if sequence == "<Key>":

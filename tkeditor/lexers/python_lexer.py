@@ -9,7 +9,7 @@ class PythonLexer(BaseLexer):
         self.custom_styles:dict = {}
         
         self.__tags = ["keyword","builtin","functionName","className","method","string_prefix",
-                     "attribute","number","decorator","constant","string","comments","bracketss","words"]
+                       "attribute","number","decorator","constant","string","comments","bracketsopen","bracketsclose","words"]
         
 
         self.words = {}
@@ -31,12 +31,13 @@ class PythonLexer(BaseLexer):
             "attribute": {"foreground": "#61AFEF"},
             "method": {"foreground": "#C678DD"},
             "functionName": {"foreground": "#C678DD"},
+            "decorator":{"foreground": "#FF9D00"},
             "builtin": {"foreground": "#F122DA"},
             "className": {"foreground": "#C678DD"},
-            "brackets": {"foreground": "#61AFEF"},
+            "bracketsopen": {"foreground": "#61AFEF"},
+            "bracketsclose": {"foreground": "#61AFEF"},
             "number":{"foreground": "#98C379"},
             "operator":{"foreground": "#98C379"},
-            "decorator":{"foreground": "#98C379"},
             "keyword": {"foreground": "#FF9D00"},
             "constant":{"foreground": "#98C379"},
             "comments": {"foreground": "#5C6370"},
@@ -165,10 +166,11 @@ class PythonLexer(BaseLexer):
             "functionName": r"\bdef\s+([a-zA-Z_]\w*)",
             "className": r"\bclass\s+([a-zA-Z_]\w*)",
             "builtin": r"\b(" + "|".join(re.escape(name) for name in filtered_builtins) + r")\b",
-            "brackets":r"[\(\)\[\]\{\}]",
-            "operator":r"[\*\+\-\/=]",
+            "bracketsopen": r"[\(,\[,\{]",
+            "bracketsclose":r"[\)\]\}]",
+            "operator":r"[\*\+\-\/=<>]",
             "number": r"\b\d+(\.\d+)?\b",
-            "decorator": r"@(\w+)",
+            "decorator": r"@\w+",
             "constant": r"\b(True|False|None|[A-Z_]{2,})\b"
         }
         for tag, pattern in snytax.items():
