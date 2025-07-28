@@ -18,10 +18,10 @@ editor.pack(expand=True, fill="both")
 lexer = PythonLexer(editor)
 lexer.set_custom_styles({
     "keyword": {"foreground": "#00FFFF","font":("Fira Code",14,"italic")},
-    "comment": {"foreground": "#808080"},
+    "comments": {"foreground": "#808080"},
     "string": {"foreground": "#90EE90"},
     "attribute": {"foreground": "steelblue"},
-    "method": {"foreground": "tomato"},
+    "method": {"foreground": "tomato","underline":True},
     "functionName":{"foreground":"tomato"},
     "className":{"foreground":"gold"},
     "constant":{"foreground":"lightcoral"}

@@ -108,9 +108,12 @@ class IndentationGuide:
         # self.set_indentationguide()
 
         # If using scrollbar, wrap yview
+        
+    def set_indentationguide(self):
         self.text.original_yview = self.text.yview
         self.text.yview = self.yview_wrapper
-    def set_indentationguide(self):
+        self.text.original_xview = self.text.xview
+        self.text.xview = self.xview_wrapper
         self._indent_guide_binds = []
         self._indent_guide_binds.append(self.text.bind("<KeyRelease>", self.schedule_draw, add="+"))
         self._indent_guide_binds.append(self.text.bind("<MouseWheel>", self.schedule_draw, add="+"))
@@ -118,6 +121,8 @@ class IndentationGuide:
         self._indent_guide_binds.append(self.text.bind("<ButtonRelease-1>", self.schedule_draw, add="+"))
 
     def remove_indentationguide(self):
+        self.text.original_yview = self.text.yview
+        self.text.original_xview = self.text.xview
         events = ["<KeyRelease>", "<MouseWheel>", "<Configure>", "<ButtonRelease-1>"]
         for event, bind_id in zip(events, getattr(self, "_indent_guide_binds", [])):
             if bind_id:
@@ -130,6 +135,11 @@ class IndentationGuide:
     def yview_wrapper(self, *args):
         # Call original yview
         self.text.original_yview(*args)
+        self.schedule_draw()
+
+    def xview_wrapper(self, *args):
+
+        self.text.original_xview(*args)
         self.schedule_draw()
 
     def draw_indent(self):

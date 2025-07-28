@@ -29,21 +29,26 @@ class PythonLexer(BaseLexer):
         self.custom_styles = custom_styles
 
     def setup_tags(self):
+        common_style = {
+            "underline": False,
+            "background": self.editor.cget('bg'),
+            "font": self.editor.cget('font')
+        }
         default_tags = {
-            "string_prefix": {"foreground": "#FF9D00"},
-            "attribute": {"foreground": "#61AFEF"},
-            "method": {"foreground": "#C678DD"},
-            "functionName": {"foreground": "#C678DD"},
-            "decorator":{"foreground": "#FF9D00"},
-            "builtin": {"foreground": "#F122DA"},
-            "className": {"foreground": "#C678DD"},
-            "bracket": {"foreground": "#61AFEF"},
-            "number":{"foreground": "#98C379"},
-            "operator":{"foreground": "#98C379"},
-            "keyword": {"foreground": "#FF9D00"},
-            "constant":{"foreground": "#98C379"},
-            "comments": {"foreground": "#5C6370"},
-            "string": {"foreground": "#98C379"},
+            "string_prefix": {"foreground": "#FF9D00",**common_style},
+            "attribute": {"foreground": "#61AFEF",**common_style},
+            "method": {"foreground": "#C678DD",**common_style},
+            "functionName": {"foreground": "#C678DD",**common_style},
+            "decorator":{"foreground": "#FF9D00",**common_style},
+            "builtin": {"foreground": "#F122DA",**common_style},
+            "className": {"foreground": "#C678DD",**common_style},
+            "bracket": {"foreground": "#61AFEF",**common_style},
+            "number":{"foreground": "#98C379",**common_style},
+            "operator":{"foreground": "#98C379",**common_style},
+            "keyword": {"foreground": "#FF9D00",**common_style},
+            "constant":{"foreground": "#98C379",**common_style},
+            "comments": {"foreground": "#5C6370",**common_style},
+            "string": {"foreground": "#98C379",**common_style},
         }
 
         for tag, default_config in default_tags.items():
@@ -58,6 +63,9 @@ class PythonLexer(BaseLexer):
                 if tag in self.custom_styles:
                     merged_config.update(self.custom_styles[tag])
                 self.editor.tag_configure(tag, **merged_config)
+        self.editor.tag_raise('sel')
+        color = self.editor.cget('selectbackground') if self.editor.cget('selectbackground') else "#264F78"
+        self.editor.tag_configure("sel", background=color, foreground="") 
     
     def highlight(self):
         # Get the visible code range

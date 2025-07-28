@@ -1,6 +1,6 @@
 from tkinter import Text
-from tkeditor.features.auto_indent import Indentations, IndentationGuide
-from tkeditor.components.context_menu import ContextMenu
+from tkeditor.features import Indentations, IndentationGuide
+from tkeditor.components import ContextMenu
 from tkeditor.core.init_config import Config
 class CustomText(Text, Indentations, ContextMenu, Config):
     def __init__(self, master=None, **kwargs):

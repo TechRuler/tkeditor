@@ -1,2 +1,2 @@
-from tkeditor.components.line_number import LineNumber
-__all__ = ["LineNumber"]
+from tkeditor.features.auto_indent import Indentations, IndentationGuide
+__all__ = ["Indentations", "IndentationGuide"]
