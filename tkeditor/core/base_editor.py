@@ -1,19 +1,30 @@
 from tkinter import Text
-from tkeditor.features.auto_indent import AutoIndent
-from tkeditor.features.context_menu import ContextMenu
+from tkeditor.features.auto_indent import Indentations, IndentationGuide
+from tkeditor.components.context_menu import ContextMenu
 from tkeditor.core.init_config import Config
-class CustomText(Text, AutoIndent, ContextMenu, Config):
+class CustomText(Text, Indentations, ContextMenu, Config):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
 
         self.setup_config()           
         self.setup_auto_indent()        
-        self.setup_context_menu()     
+        self.setup_context_menu() 
+        
+        self.indentationguide = IndentationGuide(text=self, color=kwargs.get('indent_line_color','#4b4b4b'))    
 
         super().bind('<Key>', self.brackets_and_string_complete, add="+")
         super().bind("<Tab>", self._handle_tab, add="+")
 
-    
+        if kwargs.get('indentationguide',False):
+            self.indentationguide.set_indentationguide()
+
+    def configure(self, **kwargs):
+        super().configure(**{k:v for k, v in kwargs.items() if k in Text().keys()})
+        if "indentationguide" in kwargs.keys():
+            if kwargs.get('indentationguide'):
+                self.indentationguide.set_indentationguide()
+            else:
+                self.indentationguide.remove_indentationguide()
     def brackets_and_string_complete(self, event):
         char = event.char
         brackets = {"[":"]","(":")","{":"}","'":"'",'"':'"'}

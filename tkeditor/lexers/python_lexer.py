@@ -16,6 +16,9 @@ class PythonLexer(BaseLexer):
     def style_key(self):
         tag = self.__tags
         tag.remove("words")
+        tag.remove("bracketsopen")
+        tag.remove("bracketsclose")
+        tag.append("bracket")
         return tag
     
     def add_word_to_highlight(self, word:str, color:str):
@@ -34,8 +37,7 @@ class PythonLexer(BaseLexer):
             "decorator":{"foreground": "#FF9D00"},
             "builtin": {"foreground": "#F122DA"},
             "className": {"foreground": "#C678DD"},
-            "bracketsopen": {"foreground": "#61AFEF"},
-            "bracketsclose": {"foreground": "#61AFEF"},
+            "bracket": {"foreground": "#61AFEF"},
             "number":{"foreground": "#98C379"},
             "operator":{"foreground": "#98C379"},
             "keyword": {"foreground": "#FF9D00"},
@@ -45,10 +47,17 @@ class PythonLexer(BaseLexer):
         }
 
         for tag, default_config in default_tags.items():
-            merged_config = default_config.copy()
-            if tag in self.custom_styles:
-                merged_config.update(self.custom_styles[tag])
-            self.editor.tag_configure(tag, **merged_config)
+            if tag == 'bracket':
+                merged_config = default_config.copy()
+                if tag in self.custom_styles:
+                    merged_config.update(self.custom_styles[tag])
+                self.editor.tag_configure("bracketsopen", **merged_config)
+                self.editor.tag_configure("bracketsclose", **merged_config)
+            else:
+                merged_config = default_config.copy()
+                if tag in self.custom_styles:
+                    merged_config.update(self.custom_styles[tag])
+                self.editor.tag_configure(tag, **merged_config)
     
     def highlight(self):
         # Get the visible code range
@@ -126,7 +135,7 @@ class PythonLexer(BaseLexer):
                         self.editor.tag_add("string", f"{first} + {s}c", f"{first} + {e}c")
             else:
                 self.editor.tag_add("string", f"{first} + {start}c", f"{first} + {end}c")
-
+    
 
     def _comment(self, code, first):
         # Step 1: collect spans of strings (so we can ignore them)
@@ -166,7 +175,7 @@ class PythonLexer(BaseLexer):
             "functionName": r"\bdef\s+([a-zA-Z_]\w*)",
             "className": r"\bclass\s+([a-zA-Z_]\w*)",
             "builtin": r"\b(" + "|".join(re.escape(name) for name in filtered_builtins) + r")\b",
-            "bracketsopen": r"[\(,\[,\{]",
+            "bracketsopen": r"[\(\[\{]",
             "bracketsclose":r"[\)\]\}]",
             "operator":r"[\*\+\-\/=<>]",
             "number": r"\b\d+(\.\d+)?\b",

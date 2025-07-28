@@ -7,16 +7,28 @@ class Editor(Frame):
 
         self.line_number = LineNumber(self, **kwarg)
         self.text  = CustomText(self, **kwarg)
+        self.master = master
 
 
         self.line_number.attach(self.text)
 
 
-        self.line_number.grid(row=0, column=0, sticky='ns')
         self.text.grid(row=0, column=1, sticky='nsew')
+        if kwarg.get('linenumber',True):
+            self.line_number.grid(row=0, column=0, sticky='ns')
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
+    def configure(self, **kwarg):
+        super().configure(**{k:v for k, v in kwarg.items() if k in Frame().keys()})
+        if "linenumber" in kwarg.keys():
+            if kwarg.get('linenumber'):
+                self.line_number.grid(row=0, column=0, sticky='ns')
+            else:
+                self.line_number.grid_remove()
+        self.text.configure(**kwarg)
+        self.line_number.configure(**kwarg)
+    config = configure
         
     def set_lexer(self, lexer_instance):
         """Accept a lexer object and set up highlighting."""

@@ -1,8 +1,10 @@
+from tkinter import Frame
 import re
 
-class AutoIndent:
+class Indentations:
     def setup_auto_indent(self):
         self.bind("<Return>", self.auto_indent, add="+")
+        self.bind("<Control-Return>", self.escape_line, add="+")
         self.bind("<BackSpace>", self.backspace, add="+")
         self.language = "python"  # default
 
@@ -51,6 +53,42 @@ class AutoIndent:
             self.event_generate("<<Redraw>>")
             return "break"
         self.see("insert")
+    def escape_line(self, event):
+        current_line = self.get("insert linestart", "insert lineend")
+        match = re.match(r"(\s*)", current_line)
+        if not match:
+            return
+
+        indent = len(match.group(1))
+        line_text = current_line.strip()
+        language = self.language.lower()
+
+        # Block starters and indent rules
+        increase_indent = False
+
+        if language == "python":
+            increase_indent = ":" in line_text or "{" in line_text
+        elif language in ("c", "cpp", "java", "javascript", "csharp"):
+            increase_indent = "{" in line_text and not line_text.startswith("}")
+        elif language in ("html", "xml"):
+            increase_indent = re.match(r"<[^/!][^>]*[^/]?>$", line_text) is not None
+        elif language == "lua":
+            increase_indent = re.search(r"\b(then|do|function)\b$", line_text) is not None
+        elif language == "yaml":
+            increase_indent = line_text.endswith(":")
+
+        if increase_indent:
+            indent += self.indentation
+
+        # Clean insert logic
+        line_content = self.get("insert", "insert lineend")
+        self.delete("insert", "insert lineend")
+        self.insert("insert", line_content + "\n" + " " * indent)
+        self.see("insert")
+        self.event_generate("<<Redraw>>")
+
+        return "break"
+
 
     def backspace(self, event):
         current_line = self.get("insert linestart", "insert")
@@ -60,3 +98,71 @@ class AutoIndent:
                 self.event_generate("<<Redraw>>")
                 return "break"
         self.event_generate("<<Redraw>>")
+class IndentationGuide:
+    def __init__(self, text, color=None):
+        self.text = text
+        self.color = color if color else '#4b4b4b'
+        self.indent_lines = []
+        
+        # Add custom scroll listener
+        # self.set_indentationguide()
+
+        # If using scrollbar, wrap yview
+        self.text.original_yview = self.text.yview
+        self.text.yview = self.yview_wrapper
+    def set_indentationguide(self):
+        self._indent_guide_binds = []
+        self._indent_guide_binds.append(self.text.bind("<KeyRelease>", self.schedule_draw, add="+"))
+        self._indent_guide_binds.append(self.text.bind("<MouseWheel>", self.schedule_draw, add="+"))
+        self._indent_guide_binds.append(self.text.bind("<Configure>", self.schedule_draw, add="+"))
+        self._indent_guide_binds.append(self.text.bind("<ButtonRelease-1>", self.schedule_draw, add="+"))
+
+    def remove_indentationguide(self):
+        events = ["<KeyRelease>", "<MouseWheel>", "<Configure>", "<ButtonRelease-1>"]
+        for event, bind_id in zip(events, getattr(self, "_indent_guide_binds", [])):
+            if bind_id:
+                self.text.unbind(event, bind_id)
+        self._indent_guide_binds = []
+
+    def schedule_draw(self, event=None):
+        self.text.after_idle(self.draw_indent)
+
+    def yview_wrapper(self, *args):
+        # Call original yview
+        self.text.original_yview(*args)
+        self.schedule_draw()
+
+    def draw_indent(self):
+        for frame in self.indent_lines:
+            frame._used = False
+
+        first = self.text.index("@0,0")
+        first_index = int(first.split('.')[0])
+        last = self.text.index(f"@0,{self.text.winfo_height()} +1line")
+        visible_text = self.text.get(first, last)
+
+        frame_index = 0
+        for line_no, line in enumerate(visible_text.splitlines(), start=first_index):
+            match = re.match(r'^\s+', line)
+            if match:
+                indent = match.group()
+                indent_width = 4
+                indent_levels = len(indent.replace('\t', ' ' * indent_width)) // indent_width
+                for i in range(indent_levels):
+                    char_index = f"{line_no}.{i * indent_width}"
+                    bbox = self.text.bbox(char_index)
+                    if bbox:
+                        x, y, width, height = bbox
+                        if frame_index < len(self.indent_lines):
+                            frame = self.indent_lines[frame_index]
+                        else:
+                            frame = Frame(self.text, background=self.color)
+                            self.indent_lines.append(frame)
+                        frame.place(x=x, y=y, width=2, height=height)
+                        frame._used = True
+                        frame_index += 1
+
+        for frame in self.indent_lines[frame_index:]:
+            frame.place_forget()
+
+
