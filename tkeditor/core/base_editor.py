@@ -1,14 +1,15 @@
 from tkinter import Text
 from tkeditor.features import Indentations, IndentationGuide
 from tkeditor.components import ContextMenu
-from tkeditor.core.init_config import Config
-class CustomText(Text, Indentations, ContextMenu, Config):
+class CustomText(Text, Indentations):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
+        self.variables()
 
-        self.setup_config()           
+        self.context_menu = ContextMenu(self)
+
         self.setup_auto_indent()        
-        self.setup_context_menu() 
+        self.context_menu.setup_context_menu()
         
         self.indentationguide = IndentationGuide(text=self, color=kwargs.get('indent_line_color','#4b4b4b'))    
 
@@ -17,7 +18,9 @@ class CustomText(Text, Indentations, ContextMenu, Config):
 
         if kwargs.get('indentationguide',False):
             self.indentationguide.set_indentationguide()
-
+    def variables(self):
+        self.indentation = 4
+        self.tab_width = 4
     def configure(self, **kwargs):
         super().configure(**{k:v for k, v in kwargs.items() if k in Text().keys()})
         if "indentationguide" in kwargs.keys():

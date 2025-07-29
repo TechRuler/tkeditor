@@ -1,6 +1,6 @@
 from tkinter import Frame
 from tkeditor.core import CustomText
-from tkeditor.components import LineNumber, AutoScrollbar
+from tkeditor.components import LineNumber, AutoScrollbar, FoldingCode
 from tkinter import ttk 
 class Editor(Frame):
     def __init__(self, master, **kwarg):
@@ -27,6 +27,7 @@ class Editor(Frame):
 
 
         self.line_number = LineNumber(self, **kwarg)
+        self.folding_code = FoldingCode(self, **kwarg)
         self.text  = CustomText(self, **kwarg)
         self.v_scroll = AutoScrollbar(self, orient='vertical', command=self.text.yview, style='Custom.Vertical.TScrollbar')
         self.h_scroll = AutoScrollbar(self, orient='horizontal', command=self.text.xview, style='Custom.Horizontal.TScrollbar')
@@ -37,6 +38,7 @@ class Editor(Frame):
 
 
         self.line_number.attach(self.text)
+        self.folding_code.attach(self.text)
         trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
         thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
         hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
@@ -52,14 +54,18 @@ class Editor(Frame):
                                        )
 
 
-        self.text.grid(row=0, column=1, sticky='nsew')
-        self.v_scroll.grid(row=0, column=2, rowspan=2, sticky='ns')
-        self.h_scroll.grid(row=1, column=1, sticky='ew')
+        self.folding_code.grid(row=0, column=1, rowspan=2, sticky='ns')
+        self.text.grid(row=0, column=2, sticky='nsew')
+        self.v_scroll.grid(row=0, column=3, rowspan=2, sticky='ns')
+        self.h_scroll.grid(row=1, column=2, sticky='ew')
         if kwarg.get('linenumber',True):
             self.line_number.grid(row=0, column=0, rowspan=2, sticky='ns')
 
         self.rowconfigure(0, weight=1)
-        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+
+        self.v_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
+        self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
     def __create_scrollbar_style(self,name: str,
                            trough_color: str,
                            thumb_color: str,
@@ -97,12 +103,6 @@ class Editor(Frame):
         self.text.bind("<Button-1>", self._on_key_release, add="+")
         self._on_key_release()
 
-    def apply_lexer_style(self, tag_config):
-        if hasattr(self.lexer, "setup_tags"):
-            self.lexer.setup_tags(tag_config)
-            self.lexer.highlight()
-
-
     
     def _on_key_release(self, event=None):
         """Callback to update highlighting after key press."""
@@ -112,3 +112,6 @@ class Editor(Frame):
 
     def bind(self, sequence=None, func=None, add=None):
         self.text.bind(sequence, func, add)
+    def get_context_menu(self):
+        """Return the context menu for the editor."""
+        return self.text.context_menu.get_popup_menu()

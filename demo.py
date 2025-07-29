@@ -11,6 +11,7 @@ editor = Editor(root, font=("Fira Code",14),
                 linenumber=True,indentationguide=True,
                 fg='#ffffff', line_number_fg='#ffffff', 
                 line_number_bg="#2b2b2b", insertbackground='#ffffff')
+
 editor.pack(expand=True, fill="both")
 
 
@@ -21,8 +22,8 @@ lexer.set_custom_styles({
     "comments": {"foreground": "#808080"},
     "string": {"foreground": "#90EE90"},
     "attribute": {"foreground": "steelblue"},
-    "method": {"foreground": "tomato","underline":True},
-    "functionName":{"foreground":"tomato"},
+    "method": {"foreground": "tomato", "font": ("Fira Code", 14, "bold","italic")},
+    "functionName":{"foreground":"tomato", "font": ("Fira Code", 14, "bold","italic")},
     "className":{"foreground":"gold"},
     "constant":{"foreground":"lightcoral"}
 })

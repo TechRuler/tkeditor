@@ -82,22 +82,8 @@ class PythonLexer(BaseLexer):
         self._keywords_builtin_methods_class_etc(code, first)
         self._string(self.editor.get('1.0','end'), self.editor.index('1.0'))
         self._comment(code, first)
-
-
-
     def _string(self, code: str, first: str):
-        # Step 1: Detect all comment spans
-        comment_spans = []
-        for m in re.finditer(r"#.*", code):
-            comment_spans.append(m.span())
-
-        def is_in_comment(start, end):
-            for c_start, c_end in comment_spans:
-                if start >= c_start and end <= c_end:
-                    return True
-            return False
-
-        # Step 2: Define all string regexes
+        # Step 1: Define all string regexes
         stringprefix = r"(?i:r|u|f|fr|rf|b|br|rb)?"
         sq3 = stringprefix + r"'''(?:[^\\]|\\.|\\\n)*?(?:'''|$)"
         dq3 = stringprefix + r'"""(?:[^\\]|\\.|\\\n)*?(?:"""|$)'
@@ -105,16 +91,36 @@ class PythonLexer(BaseLexer):
         dq = stringprefix + r'"(?:[^"\\\n]|\\.)*"?'
         string_pattern = f"{sq3}|{dq3}|{sq}|{dq}"
 
+        string_spans = []
         for match in re.finditer(string_pattern, code, re.DOTALL):
             start, end = match.span()
-            text = match.group()
-            
+            string_spans.append((start, end))
 
-            # Step 3: If string is inside comment, skip
+        def is_in_string(pos):
+            for s_start, s_end in string_spans:
+                if s_start <= pos < s_end:
+                    return True
+            return False
+
+        # Step 2: Detect only real comments (outside of strings)
+        comment_spans = []
+        for match in re.finditer(r"#.*", code):
+            start = match.start()
+            if not is_in_string(start):
+                comment_spans.append(match.span())
+
+        def is_in_comment(start, end):
+            for c_start, c_end in comment_spans:
+                if start >= c_start and end <= c_end:
+                    return True
+            return False
+
+        # Step 3: Highlight all strings
+        for start, end in string_spans:
+            text = code[start:end]
             if is_in_comment(start, end):
                 continue
 
-            # Step 4: Handle f-strings
             prefix_match = re.match(r"(?i)(f|fr|rf)", text)
             if prefix_match:
                 string_body = text[prefix_match.end():]
@@ -143,7 +149,7 @@ class PythonLexer(BaseLexer):
                         self.editor.tag_add("string", f"{first} + {s}c", f"{first} + {e}c")
             else:
                 self.editor.tag_add("string", f"{first} + {start}c", f"{first} + {end}c")
-    
+
 
     def _comment(self, code, first):
         # Step 1: collect spans of strings (so we can ignore them)
