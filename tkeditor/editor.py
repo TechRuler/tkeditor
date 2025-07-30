@@ -67,6 +67,7 @@ class Editor(Frame):
         self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
 
         self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
+        self.folding_code.bind("<Button-1>", self.text.indentationguide.schedule_draw, add="+")
         self.context_menu = ContextMenu(self.text)
         self.context_menu.setup_context_menu()
     def __create_scrollbar_style(self,name: str,

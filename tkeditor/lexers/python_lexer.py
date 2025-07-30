@@ -36,20 +36,20 @@ class PythonLexer(BaseLexer):
             "font": self.editor.cget('font')
         }
         default_tags = {
-            "string_prefix": {"foreground": "#FF9D00",**common_style},
-            "attribute": {"foreground": "#61AFEF",**common_style},
-            "method": {"foreground": "#C678DD",**common_style},
-            "functionName": {"foreground": "#C678DD",**common_style},
-            "decorator":{"foreground": "#FF9D00",**common_style},
-            "builtin": {"foreground": "#F122DA",**common_style},
-            "className": {"foreground": "#C678DD",**common_style},
-            "bracket": {"foreground": "#61AFEF",**common_style},
-            "number":{"foreground": "#98C379",**common_style},
-            "operator":{"foreground": "#98C379",**common_style},
-            "keyword": {"foreground": "#FF9D00",**common_style},
-            "constant":{"foreground": "#98C379",**common_style},
-            "comments": {"foreground": "#5C6370",**common_style},
-            "string": {"foreground": "#98C379",**common_style},
+            "string_prefix": {"foreground": "#FF9D00", **common_style},  
+            "attribute": {"foreground": "#61AFEF", **common_style},     
+            "method": {"foreground": "#C678DD", **common_style},         
+            "functionName": {"foreground": "#C678DD", **common_style},  
+            "decorator": {"foreground": "#FF9D00", **common_style},      
+            "builtin": {"foreground": "#F122DA", **common_style},        
+            "className": {"foreground": "#C678DD", **common_style},      
+            "bracket": {"foreground": "#61AFEF", **common_style},        
+            "number": {"foreground": "#D19A66", **common_style},         
+            "operator": {"foreground": "#56B6C2", **common_style},      
+            "keyword": {"foreground": "#FF9D00", **common_style},        
+            "constant": {"foreground": "#E5C07B", **common_style},      
+            "comments": {"foreground": "#5C6370", **common_style},
+            "string": {"foreground": "#98C379", **common_style},        
         }
 
         for tag, default_config in default_tags.items():

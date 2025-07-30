@@ -38,7 +38,7 @@ class LineNumber(Canvas):
         index = self.text_widget.index("@0,0")
         max_digits = 0
         char_width = self.char_width
-        seen_y = set()
+        y_to_line = {}  # <-- map y coordinate to the LAST line at that y
 
         while True:
             dline = self.text_widget.dlineinfo(index)
@@ -46,27 +46,25 @@ class LineNumber(Canvas):
                 break  # No more visible lines
 
             y = dline[1]
-            if y in seen_y:
-                # Prevent multiple line numbers at same y-coordinate
-                index = self.text_widget.index(f"{index}+1line")
-                continue
-            seen_y.add(y)
-
             lineno = index.split('.')[0]
-            max_digits = max(max_digits, len(lineno))
-            x = self.width - len(lineno) * char_width - 5
-
-            self.create_text(x, y, anchor='nw', text=lineno,
-                            font=self.font, fill=self.fill,
-                            tags=('line_number'))
+            y_to_line[y] = lineno  # <-- overwrite so last line at y wins
 
             index = self.text_widget.index(f"{index}+1line")
+
+        for y in sorted(y_to_line):
+            lineno = y_to_line[y]
+            max_digits = max(max_digits, len(lineno))
+            x = self.width - len(lineno) * char_width - 5
+            self.create_text(x, y, anchor='nw', text=lineno,
+                             font=self.font, fill=self.fill,
+                             tags=('line_number'))
 
         # Adjust gutter width if needed
         required_width = max_digits * char_width + 10
         if required_width != self.width:
             self.width = required_width
             self.config(width=self.width)
+
 
 
     def configure(self, **kwarg):
