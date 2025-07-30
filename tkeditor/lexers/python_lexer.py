@@ -50,6 +50,7 @@ class PythonLexer(BaseLexer):
             "constant": {"foreground": "#E5C07B", **common_style},      
             "comments": {"foreground": "#5C6370", **common_style},
             "string": {"foreground": "#98C379", **common_style},        
+            
         }
 
         for tag, default_config in default_tags.items():
@@ -67,7 +68,8 @@ class PythonLexer(BaseLexer):
         self.editor.tag_raise('sel')
         color = self.editor.cget('selectbackground') if self.editor.cget('selectbackground') else "#264F78"
         self.editor.tag_configure("sel", background=color, foreground="") 
-    
+        self.editor.tag_lower("bracketsopen", "BracketTracker")
+        self.editor.tag_lower("bracketsclose", "BracketTracker")
     def highlight(self):
         # Get the visible code range
         for tag in self.__tags:

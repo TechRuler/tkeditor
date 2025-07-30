@@ -2,10 +2,15 @@ from tkinter import Frame
 import re
 
 class Indentations:
+    def __init__(self, text_widget):
+        self.text_widget = text_widget
+        self.setup_auto_indent()
+        self.indentation = 4
+        
     def setup_auto_indent(self):
-        self.bind("<Return>", self.auto_indent, add="+")
-        self.bind("<Control-Return>", self.escape_line, add="+")
-        self.bind("<BackSpace>", self.backspace, add="+")
+        self.text_widget.bind("<Return>", self.auto_indent, add="+")
+        self.text_widget.bind("<Control-Return>", self.escape_line, add="+")
+        self.text_widget.bind("<BackSpace>", self.backspace, add="+")
         self.language = "python"  # default
 
     def set_language(self, lang: str):
@@ -18,7 +23,7 @@ class Indentations:
             raise ValueError("Indentation must be a positive integer.")
 
     def auto_indent(self, event):
-        current_line = self.get("insert linestart", "insert")
+        current_line = self.text_widget.get("insert linestart", "insert")
         match = re.match(r"(\s*)", current_line)
         if match:
             indent = len(match.group(1))
@@ -28,16 +33,10 @@ class Indentations:
             if self.language == "python":
                 if line_text.endswith(":"):
                     indent += self.indentation
-                elif line_text.endswith("{"):
-                    indent += self.indentation
-
-
-            elif self.language in ("c", "cpp", "java", "javascript", "csharp", "css"):
-                if line_text.endswith("{"):
-                    indent += self.indentation
+                
 
             elif self.language in ("html", "xml"):
-                if re.match(r"<[^/!][^>]*[^/]?>$", line_text):  # opening tag
+                if re.match(r"<[^/!][^>]*[^/]?>$", line_text):  
                     indent += self.indentation
 
             elif self.language == "lua":
@@ -47,14 +46,21 @@ class Indentations:
             elif self.language == "yaml":
                 if line_text.endswith(":"):
                     indent += self.indentation
-
-            self.insert("insert", "\n" + " " * indent)
-            self.see("insert")
-            self.event_generate("<<Redraw>>")
+            if line_text.endswith("{") or line_text.endswith("(") or line_text.endswith("["):
+                current_indent = indent
+                indent += self.indentation
+                self.text_widget.insert("insert", "\n" + " " * indent)
+                self.text_widget.mark_gravity('insert', 'left')
+                self.text_widget.insert("insert", "\n" + " " * current_indent)
+                self.text_widget.mark_gravity('insert', 'right')
+            else:
+                self.text_widget.insert("insert", "\n" + " " * indent)
+            self.text_widget.see("insert")
+            self.text_widget.event_generate("<<Redraw>>")
             return "break"
         self.see("insert")
     def escape_line(self, event):
-        current_line = self.get("insert linestart", "insert lineend")
+        current_line = self.text_widget.get("insert linestart", "insert lineend")
         match = re.match(r"(\s*)", current_line)
         if not match:
             return
@@ -65,9 +71,8 @@ class Indentations:
 
         # Block starters and indent rules
         increase_indent = False
-
         if language == "python":
-            increase_indent = ":" in line_text or "{" in line_text
+            increase_indent = line_text.endswith(":") or ("{" in line_text and not "}" in line_text)
         elif language in ("c", "cpp", "java", "javascript", "csharp"):
             increase_indent = "{" in line_text and not line_text.startswith("}")
         elif language in ("html", "xml"):
@@ -81,23 +86,23 @@ class Indentations:
             indent += self.indentation
 
         # Clean insert logic
-        line_content = self.get("insert", "insert lineend")
-        self.delete("insert", "insert lineend")
-        self.insert("insert", line_content + "\n" + " " * indent)
-        self.see("insert")
-        self.event_generate("<<Redraw>>")
+        line_content = self.text_widget.get("insert", "insert lineend")
+        self.text_widget.delete("insert", "insert lineend")
+        self.text_widget.insert("insert", line_content + "\n" + " " * indent)
+        self.text_widget.see("insert")
+        self.text_widget.event_generate("<<Redraw>>")
 
         return "break"
 
 
     def backspace(self, event):
-        current_line = self.get("insert linestart", "insert")
-        if current_line.isspace() and not self.tag_ranges("sel"):
+        current_line = self.text_widget.get("insert linestart", "insert")
+        if current_line.isspace() and not self.text_widget.tag_ranges("sel"):
             if len(current_line) % self.indentation == 0:
-                self.delete(f"insert-{self.indentation}c", "insert")
-                self.event_generate("<<Redraw>>")
+                self.text_widget.delete(f"insert-{self.indentation}c", "insert")
+                self.text_widget.event_generate("<<Redraw>>")
                 return "break"
-        self.event_generate("<<Redraw>>")
+        self.text_widget.event_generate("<<Redraw>>")
 
 
 class IndentationGuide:
@@ -105,7 +110,11 @@ class IndentationGuide:
         self.text = text
         self.color = color if color else '#4b4b4b'
         self.indent_lines = []
-
+    def set_color(self, color):
+        """Set the color for indentation guide."""
+        self.color = color
+        for frame in self.indent_lines:
+            frame.config(background=color)
     def set_indentationguide(self):
         self.text.original_yview = self.text.yview
         self.text.yview = self.yview_wrapper

@@ -1,15 +1,13 @@
 from tkinter import Text
 from tkeditor.features import Indentations, IndentationGuide
-class CustomText(Text, Indentations):
+from tkeditor.features.bracket_match import BracketTracker
+class CustomText(Text):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
         self.variables()
 
-       
-
-        self.setup_auto_indent()        
         
-        
+        self.indent = Indentations(self)
         self.indentationguide = IndentationGuide(text=self, color=kwargs.get('indent_line_color','#4b4b4b'))    
 
         super().bind('<Key>', self.brackets_and_string_complete, add="+")
@@ -17,9 +15,18 @@ class CustomText(Text, Indentations):
 
         if kwargs.get('indentationguide',False):
             self.indentationguide.set_indentationguide()
+        
+        self.bracket_tracker = BracketTracker(self, kwargs.get('bracket_tracker_color','lightblue'))
+
+
+    def set_language(self, lang: str):
+        self.indent.set_language(lang)
+    def set_indentation(self, indent: int):
+        self.indent.set_indentation(indent)
     def variables(self):
-        self.indentation = 4
+        # self.indentation = 4
         self.tab_width = 4
+
     def configure(self, **kwargs):
         super().configure(**{k:v for k, v in kwargs.items() if k in Text().keys()})
         if "indentationguide" in kwargs.keys():
@@ -27,6 +34,7 @@ class CustomText(Text, Indentations):
                 self.indentationguide.set_indentationguide()
             else:
                 self.indentationguide.remove_indentationguide()
+
     def brackets_and_string_complete(self, event):
         char = event.char
         brackets = {"[":"]","(":")","{":"}","'":"'",'"':'"'}
@@ -54,3 +62,5 @@ class CustomText(Text, Indentations):
         if sequence == "<Key>":
             return super().bind(sequence, func, add="+")
         return super().bind(sequence, func, add=add)
+
+    

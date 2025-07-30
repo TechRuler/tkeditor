@@ -5,6 +5,7 @@ from tkinter import ttk
 class Editor(Frame):
     def __init__(self, master, **kwarg):
         super().__init__(master, **{k:v for k, v in kwarg.items() if k in Frame(master).keys()})
+
         
         self.style = ttk.Style(master)
         self.style.theme_use('clam')
@@ -67,7 +68,8 @@ class Editor(Frame):
         self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
 
         self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
-        self.folding_code.bind("<Button-1>", self.text.indentationguide.schedule_draw, add="+")
+        if kwarg.get('indentationguide',False):
+            self.folding_code.bind("<Button-1>", self.text.indentationguide.schedule_draw, add="+")
         self.context_menu = ContextMenu(self.text)
         self.context_menu.setup_context_menu()
     def __create_scrollbar_style(self,name: str,
@@ -90,11 +92,42 @@ class Editor(Frame):
         super().configure(**{k:v for k, v in kwarg.items() if k in Frame().keys()})
         if "linenumber" in kwarg.keys():
             if kwarg.get('linenumber'):
-                self.line_number.grid(row=0, column=0, sticky='ns')
+                self.line_number.grid(row=0, column=0,rowspan=2, sticky='ns')
             else:
                 self.line_number.grid_remove()
+
+        if "folding_code" in kwarg.keys():
+            if kwarg.get('folding_code'):
+                self.folding_code.grid(row=0, column=1, rowspan=2, sticky='ns')
+            else:
+                self.folding_code.grid_remove()
+
         self.text.configure(**kwarg)
         self.line_number.configure(**kwarg)
+        self.folding_code.configure(**kwarg)
+
+        if  'indent_line_color' in kwarg.keys():
+            self.text.indentationguide.set_color(kwarg.get('indent_line_color', '#4b4b4b'))
+
+        if 'folding_arrow_color' in kwarg.keys():
+            self.folding_code.set_color(kwarg.get('folding_arrow_color', '#aaa'))
+
+        if 'bracket_tracker_color' in kwarg.keys():
+            self.text.bracket_tracker.set_color(kwarg.get('bracket_tracker_color','lightblue'))
+
+        trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
+        thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
+        hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
+        self.__create_scrollbar_style("Custom.Vertical.TScrollbar",
+                                       trough_color=trough_color, 
+                                       thumb_color=thumb_color,
+                                       hover_color=hover_color
+                                       )
+        self.__create_scrollbar_style("Custom.Horizontal.TScrollbar",
+                                       trough_color=trough_color, 
+                                       thumb_color=thumb_color,
+                                       hover_color=hover_color
+                                       )
     config = configure
         
     def set_lexer(self, lexer_instance):

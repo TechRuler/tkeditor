@@ -4,7 +4,7 @@ from tkinter import *
 
 root = Tk()
 root.geometry("800x500")
-root.title("Code")
+root.title("tkeditor")
 editor = Editor(root, font=("Consolas",14), 
                 bd=0, bg='#2b2b2b', 
                 highlightthickness=0,wrap='none',

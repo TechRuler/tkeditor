@@ -6,15 +6,18 @@ class FoldingCode(Canvas):
         super().__init__(master, **{k: v for k, v in kwargs.items() if k in Canvas(master).keys()})
         self.configure(
             width=kwargs.get('folding_width', 20),
-            bg=kwargs.get('bg', self.cget('background')),
+            bg=kwargs.get('folding_bg', self.cget('background') or self.cget('bg')),
             highlightthickness=0
         )
         self.text_widget = None
-        self.folded_blocks = {}  # key: start line, value: end line
+        self.folded_blocks = {}  
         self.tag_prefix = "folded_"
         self.font = get_font(kwargs.get('font', ('Consolas', 14)))
-        self.fg = kwargs.get('fg', '#aaa')
-
+        self.fg = kwargs.get('folding_arrow_color', '#aaa')
+    def set_color(self, color):
+        """Set the color for folding code."""
+        self.fg = color
+        self.itemconfig("folding_line", fill=color)
     def attach(self, text_widget):
         self.text_widget = text_widget
         for event in ("<Configure>", "<KeyRelease>", "<MouseWheel>", "<ButtonRelease-1>"):
@@ -61,7 +64,7 @@ class FoldingCode(Canvas):
                 folded = lineno in self.folded_blocks
                 try:
                     # test if font supports arrow
-                    symbol = "❯" if folded else "⌄"
+                    symbol = "❯" if folded else "∨"
                 except:
                     symbol = "+" if folded else "-"
                 self.create_text(x, y, text=symbol, anchor="nw", font=self.font, fill=self.fg, tags=("folding_line", f"line_{lineno}"))
