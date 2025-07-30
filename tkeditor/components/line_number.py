@@ -35,24 +35,40 @@ class LineNumber(Canvas):
 
     def redraw(self):
         self.delete('all')
-        a = self.text_widget.index("@0,0")
+        index = self.text_widget.index("@0,0")
+        max_digits = 0
+        char_width = self.char_width
+        seen_y = set()
 
         while True:
-            dline = self.text_widget.dlineinfo(a)
+            dline = self.text_widget.dlineinfo(index)
             if not dline:
-                break
+                break  # No more visible lines
+
             y = dline[1]
-            line_number = str(a).split('.')[0]
-            x = self.width - len(line_number)*self.char_width - 5
-            if len(line_number)*self.char_width > self.width - 5:
-                self.width = len(line_number)*self.char_width
-                self.config(width=self.width)
-            self.create_text(x, y, anchor='nw', text=line_number, 
-                             font=self.font, 
-                             fill=self.fill,
-                             tags=('line_number')
-                             )
-            a = self.text_widget.index(f"{a}+1line")
+            if y in seen_y:
+                # Prevent multiple line numbers at same y-coordinate
+                index = self.text_widget.index(f"{index}+1line")
+                continue
+            seen_y.add(y)
+
+            lineno = index.split('.')[0]
+            max_digits = max(max_digits, len(lineno))
+            x = self.width - len(lineno) * char_width - 5
+
+            self.create_text(x, y, anchor='nw', text=lineno,
+                            font=self.font, fill=self.fill,
+                            tags=('line_number'))
+
+            index = self.text_widget.index(f"{index}+1line")
+
+        # Adjust gutter width if needed
+        required_width = max_digits * char_width + 10
+        if required_width != self.width:
+            self.width = required_width
+            self.config(width=self.width)
+
+
     def configure(self, **kwarg):
         super().configure(**kwarg)
         if "line_number_fg" in kwarg:
