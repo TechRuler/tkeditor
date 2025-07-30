@@ -6,7 +6,7 @@ class CSSLexer(BaseLexer):
         super().__init__(editor)
         self.editor = editor.text
         self.custom_styles: dict = {}
-
+        self.editor.set_language("css")
         self.tags = ["selector", "property", "value", "number", "string", "comment", "important", "words"]
         self.words = {}
 

@@ -1,18 +1,19 @@
 import tkinter as tk
 from tkinter import Canvas
-
+from tkeditor.utils import get_font
 class FoldingCode(Canvas):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **{k: v for k, v in kwargs.items() if k in Canvas(master).keys()})
-        self.font = kwargs.get('font', ('Consolas', 10))
         self.configure(
             width=kwargs.get('folding_width', 20),
-            bg=kwargs.get('bg', '#2b2b2b'),
+            bg=kwargs.get('bg', self.cget('background')),
             highlightthickness=0
         )
         self.text_widget = None
         self.folded_blocks = {}  # key: start line, value: end line
         self.tag_prefix = "folded_"
+        self.font = get_font(kwargs.get('font', ('Consolas', 14)))
+        self.fg = kwargs.get('fg', '#aaa')
 
     def attach(self, text_widget):
         self.text_widget = text_widget
@@ -45,12 +46,30 @@ class FoldingCode(Canvas):
             x = 5  # Gutter margin
 
             # Detect foldable lines (you can expand this)
-            if line_text.strip().startswith(("class ", "def ", "if ", "for ", "while ")):
+            if line_text.strip() and (line_text.strip().endswith(":") or self._has_block(int(lineno))):
                 folded = lineno in self.folded_blocks
                 symbol = "+" if folded else "-"
-                self.create_text(x, y, text=symbol, anchor="nw", font=self.font, fill="#aaa", tags=("folding_line", f"line_{lineno}"))
+                self.create_text(x, y, text=symbol, anchor="nw", font=self.font, fill=self.fg, tags=("folding_line", f"line_{lineno}"))
 
             index = self.text_widget.index(f"{index}+1line")
+    def _has_block(self, line_number):
+        """Return True if the next line is more indented than this one"""
+        current_line = self.text_widget.get(f"{line_number}.0", f"{line_number}.end")
+        base_indent = self._get_indent(current_line)
+
+        # Check next few lines for indentation
+        for offset in range(1, 10):  # Max 10 lines lookahead
+            try:
+                next_line = self.text_widget.get(f"{line_number + offset}.0", f"{line_number + offset}.end")
+            except tk.TclError:
+                return False
+            if not next_line.strip():
+                continue
+            if self._get_indent(next_line) > base_indent:
+                return True
+            else:
+                return False
+        return False
 
     def _on_click(self, event):
         clicked = self.find_withtag("current")

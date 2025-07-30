@@ -6,6 +6,7 @@ class PythonLexer(BaseLexer):
     def __init__(self, editor):
         super().__init__(editor)
         self.editor = editor.text
+        self.editor.set_language("python")
         self.custom_styles:dict = {}
         
         self.__tags = ["keyword","builtin","functionName","className","method","string_prefix",

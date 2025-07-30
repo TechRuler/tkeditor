@@ -6,6 +6,7 @@ class HTMLLexer(BaseLexer):
         super().__init__(editor)
         self.editor = editor.text
         self.custom_styles: dict = {}
+        self.editor.set_language("html")
 
         self.tags = ["tag", "attribute", "string", "comment", "doctype", "words"]
         self.words = {}

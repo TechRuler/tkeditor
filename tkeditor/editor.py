@@ -1,6 +1,6 @@
 from tkinter import Frame
 from tkeditor.core import CustomText
-from tkeditor.components import LineNumber, AutoScrollbar, FoldingCode
+from tkeditor.components import LineNumber, AutoScrollbar, FoldingCode, ContextMenu
 from tkinter import ttk 
 class Editor(Frame):
     def __init__(self, master, **kwarg):
@@ -24,7 +24,6 @@ class Editor(Frame):
                 'sticky': 'ew'
             })
         ])
-
 
         self.line_number = LineNumber(self, **kwarg)
         self.folding_code = FoldingCode(self, **kwarg)
@@ -66,6 +65,10 @@ class Editor(Frame):
 
         self.v_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
         self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
+
+        self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
+        self.context_menu = ContextMenu(self.text)
+        self.context_menu.setup_context_menu()
     def __create_scrollbar_style(self,name: str,
                            trough_color: str,
                            thumb_color: str,

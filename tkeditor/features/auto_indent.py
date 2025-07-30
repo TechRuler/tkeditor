@@ -32,7 +32,7 @@ class Indentations:
                     indent += self.indentation
 
 
-            elif self.language in ("c", "cpp", "java", "javascript", "csharp"):
+            elif self.language in ("c", "cpp", "java", "javascript", "csharp", "css"):
                 if line_text.endswith("{"):
                     indent += self.indentation
 
@@ -98,17 +98,14 @@ class Indentations:
                 self.event_generate("<<Redraw>>")
                 return "break"
         self.event_generate("<<Redraw>>")
+
+
 class IndentationGuide:
     def __init__(self, text, color=None):
         self.text = text
         self.color = color if color else '#4b4b4b'
         self.indent_lines = []
-        
-        # Add custom scroll listener
-        # self.set_indentationguide()
 
-        # If using scrollbar, wrap yview
-        
     def set_indentationguide(self):
         self.text.original_yview = self.text.yview
         self.text.yview = self.yview_wrapper
@@ -133,12 +130,10 @@ class IndentationGuide:
         self.text.after_idle(self.draw_indent)
 
     def yview_wrapper(self, *args):
-        # Call original yview
         self.text.original_yview(*args)
         self.schedule_draw()
 
     def xview_wrapper(self, *args):
-
         self.text.original_xview(*args)
         self.schedule_draw()
 
@@ -152,27 +147,34 @@ class IndentationGuide:
         visible_text = self.text.get(first, last)
 
         frame_index = 0
+        prev_indent_levels = 0
         for line_no, line in enumerate(visible_text.splitlines(), start=first_index):
-            match = re.match(r'^\s+', line)
-            if match:
-                indent = match.group()
-                indent_width = 4
-                indent_levels = len(indent.replace('\t', ' ' * indent_width)) // indent_width
-                for i in range(indent_levels):
-                    char_index = f"{line_no}.{i * indent_width}"
-                    bbox = self.text.bbox(char_index)
-                    if bbox:
-                        x, y, width, height = bbox
-                        if frame_index < len(self.indent_lines):
-                            frame = self.indent_lines[frame_index]
-                        else:
-                            frame = Frame(self.text, background=self.color)
-                            self.indent_lines.append(frame)
-                        frame.place(x=x, y=y, width=2, height=height)
-                        frame._used = True
-                        frame_index += 1
+            if line.strip() == "":
+                indent_levels = prev_indent_levels  # Use previous indent
+            else:
+                match = re.match(r'^\s+', line)
+                if match:
+                    indent = match.group()
+                    indent_width = 4
+                    indent_levels = len(indent.replace('\t', ' ' * indent_width)) // indent_width
+                    prev_indent_levels = indent_levels
+                else:
+                    indent_levels = 0
+                    prev_indent_levels = 0
+
+            for i in range(indent_levels):
+                char_index = f"{line_no}.{i * 4}"
+                bbox = self.text.bbox(char_index)
+                if bbox:
+                    x, y, width, height = bbox
+                    if frame_index < len(self.indent_lines):
+                        frame = self.indent_lines[frame_index]
+                    else:
+                        frame = Frame(self.text, background=self.color)
+                        self.indent_lines.append(frame)
+                    frame.place(x=x, y=y, width=2, height=height)
+                    frame._used = True
+                    frame_index += 1
 
         for frame in self.indent_lines[frame_index:]:
             frame.place_forget()
-
-

@@ -6,10 +6,10 @@ class CustomText(Text, Indentations):
         super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
         self.variables()
 
-        self.context_menu = ContextMenu(self)
+       
 
         self.setup_auto_indent()        
-        self.context_menu.setup_context_menu()
+        
         
         self.indentationguide = IndentationGuide(text=self, color=kwargs.get('indent_line_color','#4b4b4b'))    
 

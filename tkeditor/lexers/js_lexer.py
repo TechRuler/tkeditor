@@ -6,7 +6,7 @@ class JavaScriptLexer(BaseLexer):
         super().__init__(editor)
         self.editor = editor.text
         self.custom_styles = {}
-
+        self.editor.set_language("javascript")
         self.__tags = [
             "keyword", "builtin", "functionName", "className", "method",
             "attribute", "number", "constant", "string", "comments", "words"
