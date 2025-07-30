@@ -10,7 +10,8 @@ editor = Editor(root, font=("Consolas",14),
                 highlightthickness=0,wrap='none',
                 linenumber=True,indentationguide=True,
                 fg='#ffffff', line_number_fg='#ffffff', 
-                line_number_bg="#2b2b2b", insertbackground='#ffffff')
+                line_number_bg="#4b4b4b", insertbackground='#ffffff',
+                folding_arrow_color='red',folding_bg='#4b4b4b',)
 
 editor.pack(expand=True, fill="both")
 

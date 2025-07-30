@@ -3,8 +3,8 @@ import io
 class BracketTracker:
     def __init__(self, text_widget, color=None):
         self.text_widget = text_widget
-        color = color if color else {'background': 'lightblue'}
-        self.text_widget.tag_configure("BracketTracker", background = color)
+        bgcolor = color if color else 'lightblue'
+        self.text_widget.tag_configure("BracketTracker", background = bgcolor)
         self.text_widget.bind("<KeyRelease>", lambda e:self.track_brackets(), add="+")
         self.text_widget.bind("<Button-1>", lambda e: self.text_widget.after_idle(self.track_brackets), add="+")
     def set_color(self, color):
