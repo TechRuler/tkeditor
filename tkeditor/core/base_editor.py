@@ -1,6 +1,5 @@
 from tkinter import Text
 from tkeditor.features import Indentations, IndentationGuide
-from tkeditor.components import ContextMenu
 class CustomText(Text, Indentations):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
