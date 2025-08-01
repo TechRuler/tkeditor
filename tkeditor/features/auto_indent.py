@@ -57,6 +57,7 @@ class Indentations:
                 self.text_widget.insert("insert", "\n" + " " * indent)
             self.text_widget.see("insert")
             self.text_widget.event_generate("<<Redraw>>")
+            self.text_widget.master.set_current_line_color(event)
             return "break"
         self.see("insert")
     def escape_line(self, event):
@@ -90,6 +91,7 @@ class Indentations:
         self.text_widget.delete("insert", "insert lineend")
         self.text_widget.insert("insert", line_content + "\n" + " " * indent)
         self.text_widget.see("insert")
+        self.text_widget.master.set_current_line_color(event)
         self.text_widget.event_generate("<<Redraw>>")
 
         return "break"
@@ -101,8 +103,10 @@ class Indentations:
             if len(current_line) % self.indentation == 0:
                 self.text_widget.delete(f"insert-{self.indentation}c", "insert")
                 self.text_widget.event_generate("<<Redraw>>")
+                self.text_widget.master.set_current_line_color(event)
                 return "break"
         self.text_widget.event_generate("<<Redraw>>")
+        self.text_widget.master.set_current_line_color(event)
 
 
 class IndentationGuide:

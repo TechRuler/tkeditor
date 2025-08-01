@@ -44,19 +44,21 @@ class LineNumber(Canvas):
             dline = self.text_widget.dlineinfo(index)
             if not dline:
                 break  # No more visible lines
-
+            
             y = dline[1]
             lineno = index.split('.')[0]
             y_to_line[y] = lineno  # <-- overwrite so last line at y wins
-
             index = self.text_widget.index(f"{index}+1line")
 
         for y in sorted(y_to_line):
             lineno = y_to_line[y]
+            color = self.fill
+            if lineno == self.text_widget.index("insert").split('.')[0]:
+                color = 'steelblue'
             max_digits = max(max_digits, len(lineno))
             x = self.width - len(lineno) * char_width - 5
             self.create_text(x, y, anchor='nw', text=lineno,
-                             font=self.font, fill=self.fill,
+                             font=self.font, fill=color,
                              tags=('line_number'))
 
         # Adjust gutter width if needed

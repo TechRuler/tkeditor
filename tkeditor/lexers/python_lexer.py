@@ -2,6 +2,7 @@ from tkeditor.lexers.base_lexer import BaseLexer
 import re 
 import keyword
 import builtins
+import threading
 class PythonLexer(BaseLexer):
     def __init__(self, editor):
         super().__init__(editor)
@@ -71,20 +72,22 @@ class PythonLexer(BaseLexer):
         self.editor.tag_lower("bracketsopen", "BracketTracker")
         self.editor.tag_lower("bracketsclose", "BracketTracker")
     def highlight(self):
-        # Get the visible code range
-        for tag in self.__tags:
-            self.editor.tag_remove(tag, '1.0', 'end')
-        
-        first_index = self.editor.index("@0,0")
-        first = self.editor.index(f"{first_index} -4line")
-        last = self.editor.index(f"@0,{self.editor.winfo_height()} +4line")
-        code = self.editor.get(first, last)
-        for word in self.words:
-            self._highlight(fr'\b{word}\b',word, code, first)
-        self._attributes(code, first)
-        self._keywords_builtin_methods_class_etc(code, first)
-        self._string(self.editor.get('1.0','end'), self.editor.index('1.0'))
-        self._comment(code, first)
+        def task():
+            # Get the visible code range
+            for tag in self.__tags:
+                self.editor.tag_remove(tag, '1.0', 'end')
+            
+            first_index = self.editor.index("@0,0")
+            first = self.editor.index(f"{first_index} -4line")
+            last = self.editor.index(f"@0,{self.editor.winfo_height()} +4line")
+            code = self.editor.get(first, last)
+            for word in self.words:
+                self._highlight(fr'\b{word}\b',word, code, first)
+            self._attributes(code, first)
+            self._keywords_builtin_methods_class_etc(code, first)
+            self._string(self.editor.get('1.0','end'), self.editor.index('1.0'))
+            self._comment(code, first)
+        self.editor.after_idle(task)
     def _string(self, code: str, first: str):
         # Step 1: Define all string regexes
         stringprefix = r"(?i:r|u|f|fr|rf|b|br|rb)?"

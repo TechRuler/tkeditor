@@ -11,7 +11,7 @@ editor = Editor(root, font=("Consolas",14),
                 linenumber=True,indentationguide=True,folding_code=True,
                 fg='#ffffff', line_number_fg='#ffffff', 
                 line_number_bg="#2b2b2b", insertbackground='#ffffff',
-                folding_arrow_color='#aaa',folding_bg='#2b2b2b',)
+                folding_arrow_color='#aaa',folding_bg='#2b2b2b',current_line_color='#3a3a3a',)
 
 editor.pack(expand=True, fill="both")
 
