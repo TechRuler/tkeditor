@@ -67,10 +67,12 @@ class PythonLexer(BaseLexer):
                     merged_config.update(self.custom_styles[tag])
                 self.editor.tag_configure(tag, **merged_config)
         self.editor.tag_raise('sel')
+        self.editor.tag_raise('BracketTracker')
+        self.editor.tag_raise('current_line')
         color = self.editor.cget('selectbackground') if self.editor.cget('selectbackground') else "#264F78"
         self.editor.tag_configure("sel", background=color, foreground="") 
-        self.editor.tag_lower("bracketsopen", "BracketTracker")
-        self.editor.tag_lower("bracketsclose", "BracketTracker")
+        self.editor.tag_lower("BracketTracker", "sel")
+        
     def highlight(self):
         def task():
             # Get the visible code range

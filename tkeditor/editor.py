@@ -65,6 +65,7 @@ class Editor(Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(2, weight=1)
         self.current_linecolor = kwarg.get('current_line_color', '#eee')
+        self.text.tag_configure("current_line", background=self.current_linecolor)
 
         self.set_current_line_color()
 
@@ -74,6 +75,7 @@ class Editor(Frame):
         self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
         self.text.bind("<Button-1>", self.set_current_line_color, add="+")
         self.text.bind("<Key>", self.set_current_line_color, add="+")
+        self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line','1.0','end'), add="+")
 
         
 
@@ -86,11 +88,11 @@ class Editor(Frame):
         def task():
             if not self.text.tag_ranges("sel"):
                 self.text.tag_remove("current_line", "1.0", "end")
-                self.text.tag_configure("current_line", background=self.current_linecolor)
                 self.text.tag_add("current_line", "insert linestart", "insert lineend+1c")
             else:
                 self.text.tag_remove("current_line", "1.0", "end")
             self.text.tag_lower("current_line", "sel")
+            self.text.tag_lower("current_line", "BracketTracker")
 
         self.text.after_idle(task)
 
