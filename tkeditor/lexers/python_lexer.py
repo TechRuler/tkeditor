@@ -1,5 +1,5 @@
-import re 
 from tkeditor.lexers.base_lexer import BaseLexer
+import re 
 import keyword
 import builtins
 class PythonLexer(BaseLexer):

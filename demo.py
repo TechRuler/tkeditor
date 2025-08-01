@@ -8,10 +8,10 @@ root.title("tkeditor")
 editor = Editor(root, font=("Consolas",14), 
                 bd=0, bg='#2b2b2b', 
                 highlightthickness=0,wrap='none',
-                linenumber=True,indentationguide=True,
+                linenumber=True,indentationguide=True,folding_code=True,
                 fg='#ffffff', line_number_fg='#ffffff', 
-                line_number_bg="#4b4b4b", insertbackground='#ffffff',
-                folding_arrow_color='red',folding_bg='#4b4b4b',)
+                line_number_bg="#2b2b2b", insertbackground='#ffffff',
+                folding_arrow_color='#aaa',folding_bg='#2b2b2b',)
 
 editor.pack(expand=True, fill="both")
 

@@ -3,6 +3,16 @@ import io
 class BracketTracker:
     def __init__(self, text_widget, color=None):
         self.text_widget = text_widget
+        self.open_brackets = {
+            '(': ')',
+            '{': '}',
+            '[': ']'
+        }
+        self.close_brackets = {
+            ')': '(',
+            '}': '{',
+            ']': '['
+        }
         bgcolor = color if color else 'lightblue'
         self.text_widget.tag_configure("BracketTracker", background = bgcolor)
         self.text_widget.bind("<KeyRelease>", lambda e:self.track_brackets(), add="+")
@@ -22,16 +32,16 @@ class BracketTracker:
         after_word = self.text_widget.get("insert", "insert +1c")
 
         try:
-            if pre_word == ")":
-                self._match_backwards(")")
-            elif after_word == "(":
-                self._match_forwards("(")
+            if pre_word in self.close_brackets.keys():
+                self._match_backwards(pre_word)
+            elif after_word in self.open_brackets.keys():
+                self._match_forwards(after_word)
             else:
                 # Handle case where cursor is BETWEEN matching ()
                 # like:   (|)  ← cursor is between
                 prev = self.text_widget.get("insert -1c", "insert")
                 next = self.text_widget.get("insert", "insert +1c")
-                if prev == "(" and next == ")":
+                if prev in self.open_brackets.keys() and next == self.open_brackets[prev]:
                     # Check that neither bracket is inside string/comment
                     line = self.text_widget.get("insert linestart", "insert lineend")
                     col = int(self.text_widget.index("insert").split(".")[1])
@@ -39,11 +49,22 @@ class BracketTracker:
                         self.text_widget.tag_add("BracketTracker", "insert -1c", "insert")
                         self.text_widget.tag_add("BracketTracker", "insert", "insert +1c")
                 else:
-                    # Try find surrounding bracket
-                    open_index = self._match_backwards(")", return_only=True)
-                    if open_index:
+                    nearest = None  # (index, close_bracket)
+
+                    # Search backwards to find the closest closing bracket
+                    for close_bracket in self.close_brackets:
+                        index = self._match_backwards(close_bracket, return_only=True)
+                        if index:
+                            if (nearest is None) or (self.text_widget.compare(index, ">", nearest[0])):
+                                nearest = (index, close_bracket)
+
+                    if nearest:
+                        open_index, close_char = nearest
+                        open_char = self.close_brackets[close_char]
+
                         self.text_widget.mark_set("match_temp", open_index)
-                        close_index = self._match_forwards("(", return_only=True, start_index="match_temp +1c")
+                        close_index = self._match_forwards(open_char, return_only=True, start_index="match_temp +1c")
+
                         if close_index:
                             self.text_widget.tag_add("BracketTracker", open_index, f"{open_index} +1c")
                             self.text_widget.tag_add("BracketTracker", close_index, f"{close_index} +1c")
@@ -62,7 +83,7 @@ class BracketTracker:
             word = self.text_widget.get(current_index, f"{current_index} +1c")
             if word == close_char:
                 b += 1
-            elif word == "(":
+            elif word == self.close_brackets.get(close_char, None):
                 b -= 1
             if b == 0:
                 if return_only:
@@ -82,7 +103,7 @@ class BracketTracker:
             word = self.text_widget.get(current_index, f"{current_index} +1c")
             if word == open_char:
                 b += 1
-            elif word == ")":
+            elif word == self.open_brackets.get(open_char, None):
                 b -= 1
             if b == 0:
                 if return_only:

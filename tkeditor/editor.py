@@ -54,10 +54,11 @@ class Editor(Frame):
                                        )
 
 
-        self.folding_code.grid(row=0, column=1, rowspan=2, sticky='ns')
         self.text.grid(row=0, column=2, sticky='nsew')
         self.v_scroll.grid(row=0, column=3, rowspan=2, sticky='ns')
         self.h_scroll.grid(row=1, column=2, sticky='ew')
+        if kwarg.get('folding_code', True):
+            self.folding_code.grid(row=0, column=1, rowspan=2, sticky='ns')
         if kwarg.get('linenumber',True):
             self.line_number.grid(row=0, column=0, rowspan=2, sticky='ns')
 

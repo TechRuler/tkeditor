@@ -13,7 +13,8 @@ class FoldingCode(Canvas):
         self.folded_blocks = {}  
         self.tag_prefix = "folded_"
         self.font = get_font(kwargs.get('font', ('Consolas', 14)))
-        self.fg = kwargs.get('folding_arrow_color', '#aaa')
+        self.fg = kwargs.get('folding_arrow_color', kwargs.get('fg', '#aaa'))
+        
     def set_color(self, color):
         """Set the color for folding code."""
         self.fg = color
