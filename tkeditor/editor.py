@@ -4,10 +4,66 @@ from tkeditor.components import LineNumber, AutoScrollbar, FoldingCode, ContextM
 from tkinter import ttk 
 class Editor(Frame):
     def __init__(self, master, **kwarg):
-        super().__init__(master, **{k:v for k, v in kwarg.items() if k in Frame(master).keys()})
+        Allowed_keys = Frame(master).keys()
+        super().__init__(master, **{k:v for k, v in kwarg.items() if k in Allowed_keys})
+        self.master = master
+
+        self.scrollbar_layout()
+        
+
+        self.line_number = LineNumber(self, **kwarg)
+        self.folding_code = FoldingCode(self, **kwarg)
+        self.text  = CustomText(self, **kwarg)
+        self.v_scroll = AutoScrollbar(self, orient='vertical', command=self.text.yview, style='Custom.Vertical.TScrollbar')
+        self.h_scroll = AutoScrollbar(self, orient='horizontal', command=self.text.xview, style='Custom.Horizontal.TScrollbar')
+
+        self.text.config(yscrollcommand=self.v_scroll.set)
+        self.text.config(xscrollcommand=self.h_scroll.set)
+
+
+        self.line_number.attach(self.text)
+        self.folding_code.attach(self.text)
+
+
+        trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
+        thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
+        hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
+        self.create_scrollbar_style("Custom.Vertical.TScrollbar",trough_color=trough_color, thumb_color=thumb_color,hover_color=hover_color)
+        self.create_scrollbar_style("Custom.Horizontal.TScrollbar",trough_color=trough_color, thumb_color=thumb_color,hover_color=hover_color)
+
+
+        self.text.grid(row=0, column=2, sticky='nsew')
+        self.v_scroll.grid(row=0, column=3, rowspan=2, sticky='ns')
+        self.h_scroll.grid(row=1, column=2, sticky='ew')
+        if kwarg.get('folding_code', True):
+            self.folding_code.grid(row=0, column=1, rowspan=2, sticky='ns')
+        if kwarg.get('linenumber',True):
+            self.line_number.grid(row=0, column=0, rowspan=2, sticky='ns')
+
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(2, weight=1)
+        
+        
+        self.context_menu = ContextMenu(self.text)
+        self.context_menu.setup_context_menu()
+
+
+        self.Events(**kwarg)
+    
+    def create_scrollbar_style(self,name: str, trough_color: str,thumb_color: str, hover_color: str):
+        self.style.configure(name,
+                        troughcolor=trough_color,
+                        background=thumb_color,
+                        bordercolor=trough_color,
+                        lightcolor=thumb_color,
+                        darkcolor=thumb_color,
+                        arrowcolor=thumb_color,
+                        gripcount=0)
 
         
-        self.style = ttk.Style(master)
+        self.style.map(name, background=[('active', hover_color)])
+    def scrollbar_layout(self):
+        self.style = ttk.Style(self.master)
         self.style.theme_use('clam')
         self.style.layout('Custom.Vertical.TScrollbar', [
             ('Vertical.Scrollbar.trough', {
@@ -26,92 +82,95 @@ class Editor(Frame):
             })
         ])
 
-        self.line_number = LineNumber(self, **kwarg)
-        self.folding_code = FoldingCode(self, **kwarg)
-        self.text  = CustomText(self, **kwarg)
-        self.v_scroll = AutoScrollbar(self, orient='vertical', command=self.text.yview, style='Custom.Vertical.TScrollbar')
-        self.h_scroll = AutoScrollbar(self, orient='horizontal', command=self.text.xview, style='Custom.Horizontal.TScrollbar')
+    # def Events(self, **kwarg):
+    #     # bracket tracker events
+    #     self.text.bind("<KeyRelease>", lambda e:self.text.bracket_tracker.track_brackets(), add="+")
+    #     self.text.bind("<Button-1>", lambda e: self.text.after_idle(self.text.bracket_tracker.track_brackets), add="+")
 
-        self.text.config(yscrollcommand=self.v_scroll.set)
-        self.text.config(xscrollcommand=self.h_scroll.set)
-        self.master = master
-
-
-        self.line_number.attach(self.text)
-        self.folding_code.attach(self.text)
-        trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
-        thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
-        hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
-        self.__create_scrollbar_style("Custom.Vertical.TScrollbar",
-                                       trough_color=trough_color, 
-                                       thumb_color=thumb_color,
-                                       hover_color=hover_color
-                                       )
-        self.__create_scrollbar_style("Custom.Horizontal.TScrollbar",
-                                       trough_color=trough_color, 
-                                       thumb_color=thumb_color,
-                                       hover_color=hover_color
-                                       )
+    #     # folding code events
+    #     for event in ("<Configure>", "<KeyRelease>", "<MouseWheel>", "<ButtonRelease-1>"):
+    #         self.text.bind(event, self.folding_code._schedule_draw, add="+")
+    #     self.folding_code.bind("<Button-1>", self.folding_code._on_click)
+    
+    #     # line number events
+    #     for event in ("<KeyRelease>", "<MouseWheel>", "<Button-1>", "<Configure>"):
+    #         self.text.bind(event, self.line_number.schedule_redraw, add="+")
 
 
-        self.text.grid(row=0, column=2, sticky='nsew')
-        self.v_scroll.grid(row=0, column=3, rowspan=2, sticky='ns')
-        self.h_scroll.grid(row=1, column=2, sticky='ew')
-        if kwarg.get('folding_code', True):
-            self.folding_code.grid(row=0, column=1, rowspan=2, sticky='ns')
-        if kwarg.get('linenumber',True):
-            self.line_number.grid(row=0, column=0, rowspan=2, sticky='ns')
+    #     # intentation and auto-indent
+    #     self.text.bind("<Return>", self.text.indent.auto_indent, add="+")
+    #     self.text.bind("<Control-Return>", self.text.indent.escape_line, add="+")
+    #     self.text.bind("<BackSpace>", self.text.indent.backspace, add="+")
 
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(2, weight=1)
-        self.current_linecolor = kwarg.get('current_line_color', '#eee')
-        self.text.tag_configure("current_line", background=self.current_linecolor)
+    #     # base editor events
+    #     for key in ["[", "{", "(", "]", "}", ")", "'", '"']:
+    #         self.text.bind(f"<Key-{key}>", self.text.brackets_and_string_complete, add="+")
+    #     self.text.bind("<Tab>", self.text._handle_tab, add="+")
+    #     self.text.bind("<Button-1>", self.text.set_current_line_color, add="+")
+    #     self.text.bind("<Key>", self.text.set_current_line_color, add="+")
+    #     self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line','1.0','end'), add="+")
 
-        self.set_current_line_color()
+    #     # editor events
+    #     self.v_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
+    #     self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
+    #     if kwarg.get('indentationguide',False):
+    #         self.folding_code.bind("<Button-1>", self.text.indentationguide.schedule_draw, add="+")
+    #     self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
+    def debounce(self, widget, attr_name, delay, callback):
+        after_id = getattr(widget, attr_name, None)
+        if after_id:
+            widget.after_cancel(after_id)
+        setattr(widget, attr_name, widget.after(delay, callback))
 
+    def Events(self, **kwarg):
+        ### --- Bracket Tracker --- ###
+        self.text.bind("<KeyRelease>", lambda e: self.debounce(self.text, "_track_bracket_after", 50, self.text.bracket_tracker.track_brackets), add="+")
+        self.text.bind("<Button-1>", lambda e: self.text.after_idle(self.text.bracket_tracker.track_brackets), add="+")
+
+        ### --- Folding Code --- ###
+        def fold(): self.folding_code._schedule_draw()
+        for event in ("<Configure>", "<KeyRelease>", "<MouseWheel>", "<ButtonRelease-1>"):
+            self.text.bind(event, lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
+        self.v_scroll.bind("<B1-Motion>", lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
+        self.folding_code.bind("<Button-1>", self.folding_code._on_click, add="+")
+
+        ### --- Line Number --- ###
+        def redraw_lines(): self.line_number.schedule_redraw()
+        for event in ("<KeyRelease>", "<MouseWheel>", "<Button-1>", "<Configure>"):
+            self.text.bind(event, lambda e: self.debounce(self.text, "_line_after", 50, redraw_lines), add="+")
+        self.text.bind("<<Redraw>>", self.line_number.schedule_redraw)
+
+        ### --- Indentation Events --- ###
+        self.text.bind("<Return>", self.text.indent.auto_indent, add="+")
+        self.text.bind("<Control-Return>", self.text.indent.escape_line, add="+")
+        self.text.bind("<BackSpace>", self.text.indent.backspace, add="+")
+
+        ### --- Bracket Completion --- ###
+        for key in ["[", "{", "(", "]", "}", ")", "'", '"']:
+            self.text.bind(f"<Key-{key}>", self.text.brackets_and_string_complete, add="+")
+
+        ### --- Tab Key --- ###
+        self.text.bind("<Tab>", self.text._handle_tab, add="+")
+
+        ### --- Current Line Highlight --- ###
+        def highlight_line():
+            self.debounce(self.text, "_linecolor_after", 50, self.text.set_current_line_color)
+
+        self.text.bind("<Key>", lambda e: highlight_line(), add="+")
+        self.text.bind("<Button-1>", lambda e: highlight_line(), add="+")
+        self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line', '1.0', 'end'), add="+")
+
+        ### --- Scroll Triggers --- ###
         self.v_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
         self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
 
+        ### --- Optional Indentation Guide Trigger --- ###
+        if kwarg.get('indentationguide', False):
+            self.folding_code.bind("<Button-1>", lambda e: self.text.indentationguide.schedule_draw(), add="+")
+
         self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
-        self.text.bind("<Button-1>", self.set_current_line_color, add="+")
-        self.text.bind("<Key>", self.set_current_line_color, add="+")
-        self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line','1.0','end'), add="+")
 
-        
 
-        if kwarg.get('indentationguide',False):
-            self.folding_code.bind("<Button-1>", self.text.indentationguide.schedule_draw, add="+")
-        self.context_menu = ContextMenu(self.text)
-        self.context_menu.setup_context_menu()
-    def set_current_line_color(self, event=None):
-        """Set the color for the current line in the editor."""
-        def task():
-            if not self.text.tag_ranges("sel"):
-                self.text.tag_remove("current_line", "1.0", "end")
-                self.text.tag_add("current_line", "insert linestart", "insert lineend+1c")
-            else:
-                self.text.tag_remove("current_line", "1.0", "end")
-            self.text.tag_lower("current_line", "sel")
-            self.text.tag_lower("current_line", "BracketTracker")
-
-        self.text.after_idle(task)
-
-    def __create_scrollbar_style(self,name: str,
-                           trough_color: str,
-                           thumb_color: str,
-                           hover_color: str):
-        # Default thumb style
-        self.style.configure(name,
-                        troughcolor=trough_color,
-                        background=thumb_color,
-                        bordercolor=trough_color,
-                        lightcolor=thumb_color,
-                        darkcolor=thumb_color,
-                        arrowcolor=thumb_color,
-                        gripcount=0)
-
-        # On hover (active element)
-        self.style.map(name, background=[('active', hover_color)])
     def configure(self, **kwarg):
         super().configure(**{k:v for k, v in kwarg.items() if k in Frame().keys()})
         if "linenumber" in kwarg.keys():
@@ -142,12 +201,12 @@ class Editor(Frame):
         trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
         thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
         hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
-        self.__create_scrollbar_style("Custom.Vertical.TScrollbar",
+        self.create_scrollbar_style("Custom.Vertical.TScrollbar",
                                        trough_color=trough_color, 
                                        thumb_color=thumb_color,
                                        hover_color=hover_color
                                        )
-        self.__create_scrollbar_style("Custom.Horizontal.TScrollbar",
+        self.create_scrollbar_style("Custom.Horizontal.TScrollbar",
                                        trough_color=trough_color, 
                                        thumb_color=thumb_color,
                                        hover_color=hover_color

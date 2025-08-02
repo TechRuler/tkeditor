@@ -3,29 +3,56 @@ from tkeditor.features import Indentations, IndentationGuide
 from tkeditor.features.bracket_match import BracketTracker
 class CustomText(Text):
     def __init__(self, master=None, **kwargs):
-        super().__init__(master, **{k:v for k, v in kwargs.items() if k in Text(master).keys()})
-        self.variables()
+        Allowed_keys = Text(master).keys()
+        super().__init__(master, **{k:v for k, v in kwargs.items() if k in Allowed_keys})
+        self.tab_width = 4
 
         
         self.indent = Indentations(self)
         self.indentationguide = IndentationGuide(text=self, color=kwargs.get('indent_line_color','#4b4b4b'))    
+        self.current_linecolor = kwargs.get('current_line_color', '#eee')
+        self.tag_configure("current_line", background=self.current_linecolor)
 
-        super().bind('<Key>', self.brackets_and_string_complete, add="+")
-        super().bind("<Tab>", self._handle_tab, add="+")
+        self.set_current_line_color()
 
         if kwargs.get('indentationguide',False):
             self.indentationguide.set_indentationguide()
         
         self.bracket_tracker = BracketTracker(self, kwargs.get('bracket_tracker_color','lightblue'))
 
+        # self.Events()
 
+    def Events(self):
+        """Bind events to the text widget."""
+        for key in ["[", "{", "(", "]", "}", ")", "'", '"']:
+            super().bind(f"<Key-{key}>", self.brackets_and_string_complete, add="+")
+        # super().bind('<Key>', self.brackets_and_string_complete, add="+")
+        super().bind("<Tab>", self._handle_tab, add="+")
+        super().bind("<Button-1>", self.set_current_line_color, add="+")
+        super().bind("<Key>", self.set_current_line_color, add="+")
+        super().bind("<B1-Motion>", lambda e: self.tag_remove('current_line','1.0','end'), add="+")
+        
     def set_language(self, lang: str):
         self.indent.set_language(lang)
+
     def set_indentation(self, indent: int):
         self.indent.set_indentation(indent)
-    def variables(self):
-        # self.indentation = 4
-        self.tab_width = 4
+
+    
+        
+    def set_current_line_color(self, event=None):
+        """Set the color for the current line in the editor."""
+        def task():
+            if not self.tag_ranges("sel"):
+                self.tag_remove("current_line", "1.0", "end")
+                self.tag_add("current_line", "insert linestart", "insert lineend+1c")
+            else:
+                self.tag_remove("current_line", "1.0", "end")
+            self.tag_lower("current_line", "sel")
+            self.tag_lower("current_line", "BracketTracker")
+
+        self.after_idle(task)
+
 
     def configure(self, **kwargs):
         super().configure(**{k:v for k, v in kwargs.items() if k in Text().keys()})
@@ -56,6 +83,7 @@ class CustomText(Text):
     def _handle_tab(self, event):
         """Handle tab key press for indentation."""
         self.insert("insert", " " * self.tab_width)
+        self.set_current_line_color(event)
         return "break"
 
     def bind(self, sequence=None, func=None, add=None):

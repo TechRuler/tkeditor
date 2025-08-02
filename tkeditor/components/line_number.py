@@ -4,7 +4,8 @@ from tkeditor.utils import get_font
 
 class LineNumber(Canvas):
     def __init__(self, master, **kwarg):
-        super().__init__(master, **{k:v for k, v in kwarg.items() if k in Canvas(master).keys()})
+        Allowed_keys = Canvas(master).keys()
+        super().__init__(master, **{k:v for k, v in kwarg.items() if k in Allowed_keys})
         self.master = master
         self.kwarg = kwarg
         self.text_widget = None
@@ -18,17 +19,18 @@ class LineNumber(Canvas):
                     bg=kwarg.get("line_number_bg") if kwarg.get("line_number_bg") else kwarg.get('bg') or kwarg.get("background")
                     )
         self.fill = kwarg.get("line_number_fg") if kwarg.get("line_number_fg") else kwarg.get("fg") or kwarg.get("foreground")
+    def schedule_redraw(self,event=None):
+        self.text_widget.after_idle(self.refresh_lines)
     def attach(self, text_widget):
         self.text_widget = text_widget
 
-        def schedule_redraw(event=None):
-            self.text_widget.after_idle(self.refresh_lines)
+        
 
-        self.text_widget.bind("<KeyRelease>", schedule_redraw, add="+")
-        self.text_widget.bind("<MouseWheel>", schedule_redraw, add="+")
-        self.text_widget.bind("<Button-1>", schedule_redraw, add="+")
-        self.text_widget.bind("<Configure>", schedule_redraw, add="+")
-        self.text_widget.bind("<<Redraw>>", schedule_redraw)
+        # self.text_widget.bind("<KeyRelease>", self.schedule_redraw, add="+")
+        # self.text_widget.bind("<MouseWheel>", self.schedule_redraw, add="+")
+        # self.text_widget.bind("<Button-1>", self.schedule_redraw, add="+")
+        # self.text_widget.bind("<Configure>", self.schedule_redraw, add="+")
+        # self.text_widget.bind("<<Redraw>>", self.schedule_redraw)
 
     def refresh_lines(self, event=None):
         self.redraw()

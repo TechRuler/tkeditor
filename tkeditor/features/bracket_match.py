@@ -15,8 +15,8 @@ class BracketTracker:
         }
         bgcolor = color if color else 'lightblue'
         self.text_widget.tag_configure("BracketTracker", background = bgcolor)
-        self.text_widget.bind("<KeyRelease>", lambda e:self.track_brackets(), add="+")
-        self.text_widget.bind("<Button-1>", lambda e: self.text_widget.after_idle(self.track_brackets), add="+")
+        # self.text_widget.bind("<KeyRelease>", lambda e:self.track_brackets(), add="+")
+        # self.text_widget.bind("<Button-1>", lambda e: self.text_widget.after_idle(self.track_brackets), add="+")
     def set_color(self, color):
         """Set the color for bracket tracking."""
         self.text_widget.tag_configure("BracketTracker", background = color)

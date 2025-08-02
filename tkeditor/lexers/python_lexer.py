@@ -76,18 +76,19 @@ class PythonLexer(BaseLexer):
     def highlight(self):
         def task():
             # Get the visible code range
-            for tag in self.__tags:
-                self.editor.tag_remove(tag, '1.0', 'end')
-            
             first_index = self.editor.index("@0,0")
             first = self.editor.index(f"{first_index} -4line")
             last = self.editor.index(f"@0,{self.editor.winfo_height()} +4line")
             code = self.editor.get(first, last)
+
+            for tag in self.__tags:
+                self.editor.tag_remove(tag, first, last)
+            
             for word in self.words:
                 self._highlight(fr'\b{word}\b',word, code, first)
             self._attributes(code, first)
             self._keywords_builtin_methods_class_etc(code, first)
-            self._string(self.editor.get('1.0','end'), self.editor.index('1.0'))
+            self._string(self.editor.get('1.0', 'end-1c'), self.editor.index('1.0'))
             self._comment(code, first)
         self.editor.after_idle(task)
     def _string(self, code: str, first: str):
