@@ -11,7 +11,7 @@ class LineNumber(Canvas):
         self.text_widget = None
         self.fill = kwarg.get('line_number_fg','black')
         self.font = get_font(kwarg.get('font',("TkDefaultFont",9)))
-        self.width = kwarg.get('width', 55)
+        self.width = kwarg.get('lineboxwidth', 55)
 
         self.char_width = self.font.measure('M')
 

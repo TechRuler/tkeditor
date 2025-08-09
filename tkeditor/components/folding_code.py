@@ -6,7 +6,7 @@ class FoldingCode(Canvas):
         Allowed_keys = Canvas(master).keys()
         super().__init__(master, **{k: v for k, v in kwargs.items() if k in Allowed_keys})
         self.configure(
-            width=kwargs.get('folding_width', 20),
+            width=kwargs.get('foldingboxwidth', 20),
             bg=kwargs.get('folding_bg', self.cget('background') or self.cget('bg')),
             highlightthickness=0
         )

@@ -5,6 +5,7 @@ import builtins
 import threading
 class PythonLexer(BaseLexer):
     def __init__(self, editor):
+        
         super().__init__(editor)
         self.editor = editor.text
         self.editor.set_language("python")
@@ -28,6 +29,22 @@ class PythonLexer(BaseLexer):
         self.editor.tag_configure(word, **color)
 
     def set_custom_styles(self, custom_styles:dict):
+        """
+            tokens:
+            - keyword
+            - builtin
+            - functionName 
+            - className
+            - method
+            - string_prefix
+            - attribute
+            - number
+            - decorator
+            - constant
+            - string
+            - comments
+            - bracket (for matching brackets)
+        """
         self.custom_styles = custom_styles
 
     def setup_tags(self):

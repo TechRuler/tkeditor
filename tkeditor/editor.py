@@ -4,6 +4,26 @@ from tkeditor.components import LineNumber, AutoScrollbar, FoldingCode, ContextM
 from tkinter import ttk 
 class Editor(Frame):
     def __init__(self, master, **kwarg):
+        """
+        A subclass of `tk.Text` that supports all standard `Text` parameters,
+        plus additional options for enhanced code editing features.
+
+        Additional Parameters:
+            **scrollbg (str)**: Background color of the scrollbar trough.
+            **thumbbg (str)**: Background color of the scrollbar thumb.
+            **activescrollbg (str)**: Background color of the scrollbar thumb when active/hovered.
+            **folder_code (bool)**: Enables or disables code folding.
+            **linenumber (bool)**: Enables or disables the display of line numbers.
+            **indent_line_color (str)**: Color of vertical indentation guide lines.
+            **line_number_fg (str)**: Foreground (text) color of line numbers.
+            **lineboxwidth (int)**: Width of the line number gutter in pixels.
+            **folding_arrow_color (str)**: Color of the code-folding arrow indicator.
+            **foldingboxwidth (int)**: Width of the folding gutter in pixels.
+            **folding_bg (str)**: Background color of the folding gutter.
+            **bracket_tracker_color (str)**: Highlight color for matching brackets.
+            **current_line_color (str)**: Background color for the current line highlight.
+        """
+
         Allowed_keys = Frame(master).keys()
         super().__init__(master, **{k:v for k, v in kwarg.items() if k in Allowed_keys})
         self.master = master
