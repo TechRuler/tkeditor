@@ -72,46 +72,57 @@ class BracketTracker:
             print("Bracket track error:", e)
 
     def _match_backwards(self, close_char, return_only=False, start_index=None):
-        b = 1
+        open_char = self.close_brackets.get(close_char)
         current_index = start_index or self.text_widget.index("insert -1c")
 
+        depth = 1
         while True:
-            if current_index == "1.0":
-                break  
+            # Search backwards for either char
+            idx = self.text_widget.search(f"[{close_char}{open_char}]", current_index, stopindex="1.0", backwards=True, regexp=True)
+            if not idx:
+                return None
 
-            current_index = self.text_widget.index(f"{current_index} -1c")
-            word = self.text_widget.get(current_index, f"{current_index} +1c")
-            if word == close_char:
-                b += 1
-            elif word == self.close_brackets.get(close_char, None):
-                b -= 1
-            if b == 0:
+            ch = self.text_widget.get(idx, f"{idx} +1c")
+            if ch == close_char:
+                depth += 1
+            elif ch == open_char:
+                depth -= 1
+
+            if depth == 0:
                 if return_only:
-                    return current_index
-                self.text_widget.tag_add("BracketTracker", current_index, f"{current_index} +1c")
+                    return idx
+                self.text_widget.tag_add("BracketTracker", idx, f"{idx} +1c")
                 self.text_widget.tag_add("BracketTracker", self.text_widget.index("insert -1c"), "insert")
                 return
 
+            current_index = idx
+
     def _match_forwards(self, open_char, return_only=False, start_index=None):
-        b = 1
+        close_char = self.open_brackets.get(open_char)
         current_index = start_index or self.text_widget.index("insert +1c")
 
+        depth = 1
         while True:
-            if self.text_widget.compare(current_index, ">=", "end-1c"):
-                break  
+            # Search forwards for either char
+            idx = self.text_widget.search(f"[{open_char}{close_char}]", current_index, stopindex="end-1c", forwards=True, regexp=True)
+            if not idx:
+                return None
 
-            word = self.text_widget.get(current_index, f"{current_index} +1c")
-            if word == open_char:
-                b += 1
-            elif word == self.open_brackets.get(open_char, None):
-                b -= 1
-            if b == 0:
+            ch = self.text_widget.get(idx, f"{idx} +1c")
+            if ch == open_char:
+                depth += 1
+            elif ch == close_char:
+                depth -= 1
+
+            if depth == 0:
                 if return_only:
-                    return current_index
-                self.text_widget.tag_add("BracketTracker", current_index, f"{current_index} +1c")
+                    return idx
+                self.text_widget.tag_add("BracketTracker", idx, f"{idx} +1c")
                 self.text_widget.tag_add("BracketTracker", self.text_widget.index("insert"), "insert +1c")
                 return
-            current_index = self.text_widget.index(f"{current_index} +1c")
+
+            current_index = f"{idx} +1c"
+
 
     def is_inside_string_or_comment(self,code: str, target_index: int) -> bool:
         try:
