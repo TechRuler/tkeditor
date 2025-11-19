@@ -180,15 +180,10 @@ class Editor(Frame):
         self.text.bind("<Button-1>", lambda e: highlight_line(), add="+")
         self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line', '1.0', 'end'), add="+")
 
-        ### --- Scroll Triggers --- ###
-        self.v_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
-        self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
-
+        
         ### --- Optional Indentation Guide Trigger --- ###
         if kwarg.get('indentationguide', False):
             self.folding_code.bind("<Button-1>", lambda e: self.text.indentationguide.schedule_draw(), add="+")
-
-        self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
 
 
     def configure(self, **kwarg):
@@ -232,23 +227,7 @@ class Editor(Frame):
                                        hover_color=hover_color
                                        )
     config = configure
-        
-    def set_lexer(self, lexer_instance):
-        """Accept a lexer object and set up highlighting."""
-        self.lexer = lexer_instance
-        self.lexer.setup_tags()
-        self.text.bind("<KeyRelease>", self._on_key_release, add="+")
-        self.text.bind("<Configure>", self._on_key_release, add="+")
-        self.text.bind("<MouseWheel>", self._on_key_release, add="+")
-        self.text.bind("<Button-1>", self._on_key_release, add="+")
-        self._on_key_release()
-
-    
-    def _on_key_release(self, event=None):
-        """Callback to update highlighting after key press."""
-        if hasattr(self, 'lexer'):
-            self.lexer.highlight()
-
+  
 
     def bind(self, sequence=None, func=None, add=None):
         self.text.bind(sequence, func, add)
