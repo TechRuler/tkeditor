@@ -2,7 +2,8 @@ from tkeditor.Lexers.baselexer import BaseLexer
 import keyword
 import tokenize, io
 
-PYTHON_KEYWORDS = set(keyword.kwlist)
+PYTHON_KEYWORDS = set(keyword.kwlist + [
+    "self", "cls"])
 
 
 class PythonLexer(BaseLexer):
