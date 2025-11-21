@@ -1,5 +1,4 @@
 from tkinter import Canvas
-from tkinter.font import Font
 from tkeditor.utils import get_font
 
 class LineNumber(Canvas):

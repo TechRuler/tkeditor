@@ -1,6 +1,6 @@
 from tkinter import Frame
 from tkeditor.core import CustomText
-from tkeditor.components import LineNumber, AutoScrollbar, FoldingCode, ContextMenu
+from tkeditor.ui import LineNumber, AutoScrollbar, FoldingCode, ContextMenu
 from tkinter import ttk 
 class Editor(Frame):
     def __init__(self, master, **kwarg):
@@ -102,40 +102,6 @@ class Editor(Frame):
             })
         ])
 
-    # def Events(self, **kwarg):
-    #     # bracket tracker events
-    #     self.text.bind("<KeyRelease>", lambda e:self.text.bracket_tracker.track_brackets(), add="+")
-    #     self.text.bind("<Button-1>", lambda e: self.text.after_idle(self.text.bracket_tracker.track_brackets), add="+")
-
-    #     # folding code events
-    #     for event in ("<Configure>", "<KeyRelease>", "<MouseWheel>", "<ButtonRelease-1>"):
-    #         self.text.bind(event, self.folding_code._schedule_draw, add="+")
-    #     self.folding_code.bind("<Button-1>", self.folding_code._on_click)
-    
-    #     # line number events
-    #     for event in ("<KeyRelease>", "<MouseWheel>", "<Button-1>", "<Configure>"):
-    #         self.text.bind(event, self.line_number.schedule_redraw, add="+")
-
-
-    #     # intentation and auto-indent
-    #     self.text.bind("<Return>", self.text.indent.auto_indent, add="+")
-    #     self.text.bind("<Control-Return>", self.text.indent.escape_line, add="+")
-    #     self.text.bind("<BackSpace>", self.text.indent.backspace, add="+")
-
-    #     # base editor events
-    #     for key in ["[", "{", "(", "]", "}", ")", "'", '"']:
-    #         self.text.bind(f"<Key-{key}>", self.text.brackets_and_string_complete, add="+")
-    #     self.text.bind("<Tab>", self.text._handle_tab, add="+")
-    #     self.text.bind("<Button-1>", self.text.set_current_line_color, add="+")
-    #     self.text.bind("<Key>", self.text.set_current_line_color, add="+")
-    #     self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line','1.0','end'), add="+")
-
-    #     # editor events
-    #     self.v_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
-    #     self.h_scroll.bind("<B1-Motion>", self._on_key_release, add="+")
-    #     if kwarg.get('indentationguide',False):
-    #         self.folding_code.bind("<Button-1>", self.text.indentationguide.schedule_draw, add="+")
-    #     self.folding_code.bind("<Button-1>", self._on_key_release, add="+")
     def debounce(self, widget, attr_name, delay, callback):
         after_id = getattr(widget, attr_name, None)
         if after_id:
@@ -150,15 +116,19 @@ class Editor(Frame):
         ### --- Folding Code --- ###
         def fold(): self.folding_code._schedule_draw()
         for event in ("<Configure>", "<KeyRelease>", "<MouseWheel>", "<ButtonRelease-1>"):
-            self.text.bind(event, lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
-        self.v_scroll.bind("<B1-Motion>", lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
+            self.text.bind(event, self.folding_code._schedule_draw, add="+")
+        self.v_scroll.bind("<B1-Motion>", self.folding_code._schedule_draw, add="+")
+        #     self.text.bind(event, lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
+        # self.v_scroll.bind("<B1-Motion>", lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
         self.folding_code.bind("<Button-1>", self.folding_code._on_click, add="+")
 
         ### --- Line Number --- ###
         def redraw_lines(): self.line_number.schedule_redraw()
-        for event in ("<KeyRelease>", "<MouseWheel>", "<Button-1>", "<Configure>"):
-            self.text.bind(event, lambda e: self.debounce(self.text, "_line_after", 50, redraw_lines), add="+")
-        self.text.bind("<<Redraw>>", self.line_number.schedule_redraw)
+        for event in ("<KeyRelease>", "<MouseWheel>", "<Button-1>", "<Configure>","<<Redraw>>"):
+            # self.text.bind(event, lambda e: self.debounce(self.text, "_line_after", 50, redraw_lines), add="+")
+            self.text.bind(event, self.line_number.schedule_redraw, add="+")
+        # self.text.bind("<<Redraw>>", self.line_number.schedule_redraw)
+        self.v_scroll.bind("<B1-Motion>", self.line_number.schedule_redraw, add="+")
 
         ### --- Indentation Events --- ###
         self.text.bind("<Return>", self.text.indent.auto_indent, add="+")

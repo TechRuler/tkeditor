@@ -1,6 +1,6 @@
 from tkinter import Text
-from tkeditor.features import Indentations, IndentationGuide
-from tkeditor.features.bracket_match import BracketTracker
+from tkeditor.core.auto_indent import Indentations, IndentationGuide
+from tkeditor.core.bracket_match import BracketTracker
 class CustomText(Text):
     def __init__(self, master=None, **kwargs):
         Allowed_keys = Text(master).keys()

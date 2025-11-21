@@ -1,5 +1,5 @@
 from tkeditor import Editor
-from tkeditor.Lexers import PythonLexer,Highlighter
+from tkeditor.Lexers import PythonLexer,Highlighter, CPPLexer
 from tkinter import *
 
 root = Tk()
@@ -17,6 +17,6 @@ editor.pack(expand=True, fill="both")
 
 
 
-lexer = PythonLexer()
+lexer = CPPLexer()
 highlight = Highlighter(editor.text, lexer)
 root.mainloop()
