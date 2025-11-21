@@ -90,5 +90,13 @@ class CustomText(Text):
         if sequence == "<Key>":
             return super().bind(sequence, func, add="+")
         return super().bind(sequence, func, add=add)
+    
+    def get_all_content(self):
+        return self.get("1.0", "end")
+    
+    def get_visible_content(self):
+        first_line = self.index("@0,0")
+        last_line = self.index(f"@0,{self.winfo_height()}")
+        return self.get(first_line, last_line)
 
     

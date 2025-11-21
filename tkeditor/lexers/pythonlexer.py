@@ -17,6 +17,8 @@ class PythonLexer(BaseLexer):
         src = io.StringIO(text)
 
         prev_tok = None
+        prev_tok_is_decorator = False  # initialize here!
+        in_fstring = False
 
         try:
             for tok in tokenize.generate_tokens(src.readline):
@@ -33,9 +35,27 @@ class PythonLexer(BaseLexer):
                 # ====================================================
                 # 1) BASIC TOKENS
                 # ====================================================
+                # -------------------------------
+                # f-string handling
+                # -------------------------------
+                if ttype == tokenize.FSTRING_START:
+                    tokens.append(("string", start, end))
+                    in_fstring = True
+
+                elif ttype == tokenize.FSTRING_MIDDLE:
+                    # The literal parts between {…} are string
+                    # Expressions inside {} are separate tokens
+                    if "{" in tstr or "}" in tstr:
+                        tokens.append(("f_expr", start, end))
+                    else:
+                        tokens.append(("string", start, end))
+
+                elif ttype == tokenize.FSTRING_END:
+                    tokens.append(("string", start, end))
+                    in_fstring = False
+                    
                 if ttype == tokenize.STRING:
                     tokens.append(("string", start, end))
-                
                 elif ttype == tokenize.COMMENT:
                     tokens.append(("comment", start, end))
 
@@ -46,12 +66,20 @@ class PythonLexer(BaseLexer):
                     tokens.append(("keyword", start, end))
 
                 elif ttype == tokenize.OP:
-                    tokens.append(("operator", start, end))
+                    if tstr == "@":
+                        prev_tok_is_decorator = True
+                        tokens.append(("operator", start, end))
+                    else:
+                        tokens.append(("operator", start, end))
 
                 elif ttype == tokenize.NAME:
-                    tokens.append(("ident", start, end))
+                    if prev_tok_is_decorator:
+                        tokens.append(("decorator", f"{sline}.{scol}", f"{eline}.{ecol}"))
+                        prev_tok_is_decorator = False
+                    else:
+                        tokens.append(("ident", start, end))
 
-
+                
                 # ====================================================
                 # 2) CLASS NAME DETECTION: class NAME
                 # ====================================================
@@ -76,9 +104,12 @@ class PythonLexer(BaseLexer):
                     tstr == "("
                 ):
                     # mark prev token as function
-                    fname_start = f"{prev_tok.start[0]}.{prev_tok.start[1]}"
-                    fname_end   = f"{prev_tok.end[0]}.{prev_tok.end[1]}"
-                    tokens.append(("function", fname_start, fname_end))
+                    # fname_start = f"{prev_tok.start[0]}.{prev_tok.start[1]}"
+                    # fname_end   = f"{prev_tok.end[0]}.{prev_tok.end[1]}"
+                    # tokens.append(("function", fname_start, fname_end))
+                    # skip if prev_tok is decorator (@name)
+                    if prev_tok.start[0] == tok.start[0]:  # same line as '('
+                        tokens.append(("function", f"{prev_tok.start[0]}.{prev_tok.start[1]}", f"{prev_tok.end[0]}.{prev_tok.end[1]}"))
 
                 prev_tok = tok
 
@@ -86,3 +117,4 @@ class PythonLexer(BaseLexer):
             pass
 
         return tokens
+

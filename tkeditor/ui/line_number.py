@@ -11,6 +11,7 @@ class LineNumber(Canvas):
         self.fill = kwarg.get('line_number_fg','black')
         self.font = get_font(kwarg.get('font',("TkDefaultFont",9)))
         self.width = kwarg.get('lineboxwidth', 55)
+        self.current_line_number = kwarg.get('current_line_number', "steelblue")
 
         self.char_width = self.font.measure('M')
 
@@ -24,13 +25,6 @@ class LineNumber(Canvas):
         self.text_widget = text_widget
 
         
-
-        # self.text_widget.bind("<KeyRelease>", self.schedule_redraw, add="+")
-        # self.text_widget.bind("<MouseWheel>", self.schedule_redraw, add="+")
-        # self.text_widget.bind("<Button-1>", self.schedule_redraw, add="+")
-        # self.text_widget.bind("<Configure>", self.schedule_redraw, add="+")
-        # self.text_widget.bind("<<Redraw>>", self.schedule_redraw)
-
     def refresh_lines(self, event=None):
         self.redraw()
 
@@ -55,7 +49,7 @@ class LineNumber(Canvas):
             lineno = y_to_line[y]
             color = self.fill
             if lineno == self.text_widget.index("insert").split('.')[0]:
-                color = 'steelblue'
+                color = self.current_line_number
             max_digits = max(max_digits, len(lineno))
             x = self.width - len(lineno) * char_width - 5
             self.create_text(x, y, anchor='nw', text=lineno,

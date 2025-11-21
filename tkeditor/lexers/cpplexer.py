@@ -21,6 +21,7 @@ class CPPLexer(BaseLexer):
     CHAR_RE     = re.compile(r"'(\\.|[^'])'")
     IDENT_RE    = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
     FUNC_CALL_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+    PREPROCESSOR_RE = re.compile(r"#\s*[A-Za-z_][A-Za-z0-9_]*")
 
     MULTI_OPS = [
         "==","!=", ">=","<=", "++","--", "&&","||",
@@ -87,6 +88,12 @@ class CPPLexer(BaseLexer):
                 i = line.index("//")
                 tokens.append(("comment", f"{ln}.{i}", f"{ln}.{len(line)}"))
                 protected.append((ln, i, len(line)))
+                
+            m = self.PREPROCESSOR_RE.match(line)
+            if m:
+                s, e = m.start(), m.end()
+                tokens.append(("preprocessor", f"{ln}.{s}", f"{ln}.{e}"))
+                protected.append((ln, s, len(line)))
 
         # -------------------------------------------------------
         # Helper: check if protected

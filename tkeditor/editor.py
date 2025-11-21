@@ -197,10 +197,18 @@ class Editor(Frame):
                                        hover_color=hover_color
                                        )
     config = configure
-  
 
+    
     def bind(self, sequence=None, func=None, add=None):
         self.text.bind(sequence, func, add)
     def get_context_menu(self):
         """Return the context menu for the editor."""
         return self.text.context_menu.get_popup_menu()
+    
+    def get_content(self, condition:str):
+        if condition.lower().strip() == "all":
+            return self.text.get_all_content()
+        elif condition.lower().strip() == "visible":
+            return self.text.get_visible_content()
+    def get_text_widget(self):
+        return self.text

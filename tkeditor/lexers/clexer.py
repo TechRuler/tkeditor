@@ -19,6 +19,7 @@ class CLexer(BaseLexer):
     CHAR_RE = re.compile(r"'(\\.|[^'])'")
     IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
     FUNC_CALL_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+    PREPROCESSOR_RE = re.compile(r"#\s*[A-Za-z_][A-Za-z0-9_]*")
 
     def lex(self, text):
 
@@ -43,13 +44,20 @@ class CLexer(BaseLexer):
                 s, e = m.start(), m.end()
                 tokens.append(("string", f"{ln}.{s}", f"{ln}.{e}"))
                 protected.append((ln, s, e))
+            
+            # preprocessor directives
+            m = self.PREPROCESSOR_RE.match(line)
+            if m:
+                s, e = m.start(), m.end()
+                tokens.append(("preprocessor", f"{ln}.{s}", f"{ln}.{e}"))
+                protected.append((ln, s, len(line)))
 
             # comments //
             if "//" in line:
                 i = line.index("//")
                 tokens.append(("comment", f"{ln}.{i}", f"{ln}.{len(line)}"))
                 protected.append((ln, i, len(line)))
-
+            
         # -----------------------------------
         # helper: check if inside protected
         # -----------------------------------
@@ -58,7 +66,11 @@ class CLexer(BaseLexer):
                 if pl == line_no and a <= col < b:
                     return True
             return False
-
+        #numbers
+        for m in re.finditer(r'\b\d+(\.\d+)?\b', line):
+            s, e = m.start(), m.end()
+            if not is_protected(ln, s):
+                tokens.append(("number", f"{ln}.{s}", f"{ln}.{e}"))
         # -----------------------------------
         # 2) IDENT, KEYWORD, FUNCTION, OPERATOR
         # -----------------------------------

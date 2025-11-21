@@ -11,6 +11,9 @@ class XMLLexer(BaseLexer):
     STRING_RE = re.compile(r'"(\\.|[^"])*"|\'(\\.|[^\'])*\'')
     COMMENT_RE = re.compile(r'<!--(.*?)-->')
 
+    def set_style(self, style:dict) -> dict:
+        self.style = style
+
     def lex(self, text):
         tokens = []
         lines = text.split("\n")
@@ -42,13 +45,13 @@ class XMLLexer(BaseLexer):
             for m in self.TAG_RE.finditer(line):
                 s, e = m.start(1), m.end(1)
                 if not is_protected(ln, s):
-                    tokens.append(("keyword", f"{ln}.{s}", f"{ln}.{e}"))
+                    tokens.append(("tag", f"{ln}.{s}", f"{ln}.{e}"))
 
             # attributes
             for m in self.ATTR_RE.finditer(line):
                 s, e = m.start(1), m.end(1)
                 if not is_protected(ln, s):
-                    tokens.append(("ident", f"{ln}.{s}", f"{ln}.{e}"))
+                    tokens.append(("attribute", f"{ln}.{s}", f"{ln}.{e}"))
 
             # operators: < > / = 
             for i, ch in enumerate(line):

@@ -44,18 +44,18 @@ class CSSLexer(BaseLexer):
             if m:
                 s, e = m.start(), m.end()
                 if not is_protected(ln, s):
-                    tokens.append(("keyword", f"{ln}.{s}", f"{ln}.{e}"))
+                    tokens.append(("selector", f"{ln}.{s}", f"{ln}.{e}"))
 
             # Properties
             for m in self.PROPERTY_RE.finditer(line):
                 s, e = m.start(1), m.end(1)
                 prop = m.group(1)
-                tokens.append(("keyword", f"{ln}.{s}", f"{ln}.{e}"))
+                tokens.append(("property", f"{ln}.{s}", f"{ln}.{e}"))
 
             # Values
             for m in self.VALUE_RE.finditer(line):
                 s, e = m.start(1), m.end(1)
-                tokens.append(("string", f"{ln}.{s}", f"{ln}.{e}"))
+                tokens.append(("value", f"{ln}.{s}", f"{ln}.{e}"))
 
             # Operators
             for m in self.OPERATOR_RE.finditer(line):

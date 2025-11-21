@@ -4,21 +4,21 @@ from tkeditor.Lexers.jslexer import JavaScriptLexer
 from tkeditor.Lexers.highlight import Highlighter
 from tkeditor.Lexers.clexer import CLexer
 from tkeditor.Lexers.cpplexer import CPPLexer
-from tkeditor.Lexers.javalexer import JavaLexer
-from tkeditor.Lexers.clexercsharp import CLexerCSharp
-from tkeditor.Lexers.golexer import GoLexer
-from tkeditor.Lexers.rustlexer import RustLexer
-from tkeditor.Lexers.phplexer import PHPLexer
-from tkeditor.Lexers.swiftlexer import SwiftLexer
-from tkeditor.Lexers.kotlinlexer import KotlinLexer
-from tkeditor.Lexers.tslexer import TypeScriptLexer
 from tkeditor.Lexers.htmllexer import HTMLLexer
 from tkeditor.Lexers.csslexer import CSSLexer
-from tkeditor.Lexers.bashlexer import BashLexer
-from tkeditor.Lexers.dartlexer import DartLexer
-from tkeditor.Lexers.rubylexer import RubyLexer
-from tkeditor.Lexers.lualexer import LuaLexer
 from tkeditor.Lexers.jsonlexer import JSONLexer
 from tkeditor.Lexers.yamllexer import YAMLLexer
 from tkeditor.Lexers.xmllexer import XMLLexer
-from tkeditor.Lexers.markdownlexer import MarkdownLexer
+__all__ = [
+    "BaseLexer",
+    "PythonLexer",
+    "JavaScriptLexer",
+    "Highlighter",
+    "CLexer",
+    "CPPLexer",
+    "HTMLLexer",
+    "CSSLexer",
+    "JSONLexer",
+    "YAMLLexer",
+    "XMLLexer",
+]
