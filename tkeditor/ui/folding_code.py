@@ -1,5 +1,4 @@
-import tkinter as tk
-from tkinter import Canvas
+from tkinter import Canvas, TclError
 from tkeditor.utils import get_font
 class FoldingCode(Canvas):
     def __init__(self, master=None, **kwargs):
@@ -14,7 +13,8 @@ class FoldingCode(Canvas):
         self.folded_blocks = {}  
         self.tag_prefix = "folded_"
         self.font = get_font(kwargs.get('font', ('Consolas', 14)))
-        self.fg = kwargs.get('folding_arrow_color', kwargs.get('fg', '#aaa'))
+        self.fg = kwargs.get('folding_arrow_color', kwargs.get('fg', '#000000'))
+        self.width = kwargs.get('width')
         
     def set_color(self, color):
         """Set the color for folding code."""
@@ -72,6 +72,11 @@ class FoldingCode(Canvas):
                 self.create_text(x, y, text=symbol, anchor="nw", font=self.font, fill=self.fg, tags=("folding_line", f"line_{lineno}"))
 
             index = self.text_widget.index(f"{index}+1line")
+        # Adjust gutter width if needed
+        required_width = 1 * self.font.measure("M") + 10
+        if required_width != self.width:
+            self.width = required_width
+            self.config(width=self.width)
     def _has_block(self, line_number):
         """Return True if the next line is more indented than this one"""
         current_line = self.text_widget.get(f"{line_number}.0", f"{line_number}.end")
@@ -81,7 +86,7 @@ class FoldingCode(Canvas):
         for offset in range(1, 10):  # Max 10 lines lookahead
             try:
                 next_line = self.text_widget.get(f"{line_number + offset}.0", f"{line_number + offset}.end")
-            except tk.TclError:
+            except TclError:
                 return False
             if not next_line.strip():
                 continue

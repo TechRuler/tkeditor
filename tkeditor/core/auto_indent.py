@@ -58,6 +58,7 @@ class Indentations:
                 self.text_widget.insert("insert", "\n" + " " * indent)
             self.text_widget.see("insert")
             self.text_widget.event_generate("<<Redraw>>")
+            self.text_widget.event_generate("<<DropDown>>")
             self.text_widget.set_current_line_color(event)
             return "break"
         self.see("insert")
@@ -94,6 +95,7 @@ class Indentations:
         self.text_widget.see("insert")
         self.text_widget.set_current_line_color(event)
         self.text_widget.event_generate("<<Redraw>>")
+        self.text_widget.event_generate("<<DropDown>>")
 
         return "break"
 
@@ -104,9 +106,12 @@ class Indentations:
             if len(current_line) % self.indentation == 0:
                 self.text_widget.delete(f"insert-{self.indentation}c", "insert")
                 self.text_widget.event_generate("<<Redraw>>")
+                self.text_widget.event_generate("<<DropDown>>")
                 self.text_widget.set_current_line_color(event)
                 return "break"
         self.text_widget.event_generate("<<Redraw>>")
+        self.text_widget.event_generate("<<DropDown>>")
+
         self.text_widget.set_current_line_color(event)
 
 

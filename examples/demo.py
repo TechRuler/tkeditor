@@ -7,12 +7,15 @@ from tkeditor.Lexers import PythonLexer,Highlighter,HTMLLexer
 from tkinter import *
 
 root = Tk()
-root.geometry("800x500")
+root.geometry("800x500") 
 root.title("tkeditor")
-editor = Editor(root)
+editor = Editor(
+    root, 
+    font=("Cascadia Code",15), 
+    indent_line_color="red", 
+)
 
 editor.pack(expand=True, fill="both")
-
 
 
 lexer = PythonLexer()

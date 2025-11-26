@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tkeditor"                  # Your package name (must be unique)
+version = "0.1.0"
+description = "A Python editor with syntax highlighting, folding, line numbers, and bracket tracking"
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [{name="Anmol Kumar", email="ask995844@gmail.com"}]
+license = {file = "LICENSE"}
+
+[project.urls]
+Homepage = "https://github.com/TechRuler/tkeditor"

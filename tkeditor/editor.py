@@ -21,6 +21,7 @@ class Editor(Frame):
             **foldingboxwidth (int)**: Width of the folding gutter in pixels.
             **folding_bg (str)**: Background color of the folding gutter.
             **bracket_tracker_color (str)**: Highlight color for matching brackets.
+            **bracket_tracker (bool)**: Highlighting brackets 
             **current_line_color (str)**: Background color for the current line highlight.
         """
 
@@ -109,25 +110,21 @@ class Editor(Frame):
         setattr(widget, attr_name, widget.after(delay, callback))
 
     def Events(self, **kwarg):
-        ### --- Bracket Tracker --- ###
-        self.text.bind("<KeyRelease>", lambda e: self.debounce(self.text, "_track_bracket_after", 50, self.text.bracket_tracker.track_brackets), add="+")
-        self.text.bind("<Button-1>", lambda e: self.text.after_idle(self.text.bracket_tracker.track_brackets), add="+")
+        if kwarg.get("bracket_tracker", False):
+            ### --- Bracket Tracker --- ###
+            self.text.bind("<KeyRelease>", lambda e: self.debounce(self.text, "_track_bracket_after", 50, self.text.bracket_tracker.track_brackets), add="+")
+            self.text.bind("<Button-1>", lambda e: self.text.after_idle(self.text.bracket_tracker.track_brackets), add="+")
 
         ### --- Folding Code --- ###
-        def fold(): self.folding_code._schedule_draw()
         for event in ("<Configure>", "<KeyRelease>", "<MouseWheel>", "<ButtonRelease-1>"):
             self.text.bind(event, self.folding_code._schedule_draw, add="+")
         self.v_scroll.bind("<B1-Motion>", self.folding_code._schedule_draw, add="+")
-        #     self.text.bind(event, lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
-        # self.v_scroll.bind("<B1-Motion>", lambda e: self.debounce(self.text, "_folding_after", 100, fold), add="+")
         self.folding_code.bind("<Button-1>", self.folding_code._on_click, add="+")
 
         ### --- Line Number --- ###
-        def redraw_lines(): self.line_number.schedule_redraw()
+        
         for event in ("<KeyRelease>", "<MouseWheel>", "<Button-1>", "<Configure>","<<Redraw>>"):
-            # self.text.bind(event, lambda e: self.debounce(self.text, "_line_after", 50, redraw_lines), add="+")
             self.text.bind(event, self.line_number.schedule_redraw, add="+")
-        # self.text.bind("<<Redraw>>", self.line_number.schedule_redraw)
         self.v_scroll.bind("<B1-Motion>", self.line_number.schedule_redraw, add="+")
 
         ### --- Indentation Events --- ###

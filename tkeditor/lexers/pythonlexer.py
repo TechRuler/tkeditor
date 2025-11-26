@@ -10,7 +10,9 @@ class PythonLexer(BaseLexer):
 
     name = "python"
     file_extensions = ["py"]
-
+    def __init__(self):
+        super().__init__()
+        self.identifiers = set()
     def lex(self, text):
 
         tokens = []
@@ -19,6 +21,8 @@ class PythonLexer(BaseLexer):
         prev_tok = None
         prev_tok_is_decorator = False  # initialize here!
         in_fstring = False
+        store_word = []
+        
 
         try:
             for tok in tokenize.generate_tokens(src.readline):
@@ -73,11 +77,15 @@ class PythonLexer(BaseLexer):
                         tokens.append(("operator", start, end))
 
                 elif ttype == tokenize.NAME:
+                    
                     if prev_tok_is_decorator:
                         tokens.append(("decorator", f"{sline}.{scol}", f"{eline}.{ecol}"))
                         prev_tok_is_decorator = False
                     else:
                         tokens.append(("ident", start, end))
+                        
+                        
+                        
 
                 
                 # ====================================================

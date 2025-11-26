@@ -4,17 +4,6 @@ class BaseLexer:
     file_extensions = []   # ["py"], ["js"], etc.
     def __init__(self):
 
-        # tag colors (editor will configure tag based on this)
-        # styles = {
-        #     "keyword":  "#ff4791",   # bright pink
-        #     "string":   "#00ff9c",   # neon green
-        #     "comment":  "#9ca0a6",   # soft gray
-        #     "number":   "#f9c74f",   # warm yellow
-        #     "operator": "#ff8c42",   # orange
-        #     "ident":    "#000000",   # default white
-        #     "function": "#4d79ff",   # electric blue
-        #     "class":    "#ad6cff"    # purple
-        # }
         
         self.default_styles = {
             # ---------- Core ----------

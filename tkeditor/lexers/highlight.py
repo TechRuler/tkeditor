@@ -3,6 +3,8 @@ class Highlighter:
         self.text = text_widget
         self.lexer = lexer
 
+        setattr(text_widget, 'lexer', self.lexer)
+
         # create tags
         self.styles = lexer.get_styles()
         for name, attrs in self.styles.items():
