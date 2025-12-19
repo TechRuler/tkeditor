@@ -13,6 +13,7 @@ editor = Editor(
     root, 
     font=("Cascadia Code",15), 
     indent_line_color="red", 
+    bracket_tracker=True
 )
 
 editor.pack(expand=True, fill="both")

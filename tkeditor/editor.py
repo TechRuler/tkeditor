@@ -16,6 +16,7 @@ class Editor(Frame):
             **linenumber (bool)**: Enables or disables the display of line numbers.
             **indent_line_color (str)**: Color of vertical indentation guide lines.
             **line_number_fg (str)**: Foreground (text) color of line numbers.
+            **indentationguide (bool)**: Set IndentationGuide.
             **lineboxwidth (int)**: Width of the line number gutter in pixels.
             **folding_arrow_color (str)**: Color of the code-folding arrow indicator.
             **foldingboxwidth (int)**: Width of the folding gutter in pixels.
