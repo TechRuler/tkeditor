@@ -1,6 +1,6 @@
 from tkinter.font import Font 
 
-def get_font(font):
+def get_font(font) -> Font:
     font_dict = {}
     if isinstance(font, (tuple,list)):
         for item in font:
@@ -18,3 +18,4 @@ def get_font(font):
         return Font(**font_dict)
     except Exception as e:
         print("font error :", e)
+        return Font()

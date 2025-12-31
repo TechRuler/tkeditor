@@ -1,7 +1,10 @@
-from tkinter import Frame
+from tkinter import Frame, Canvas
 from tkeditor.core import CustomText
 from tkeditor.ui import LineNumber, AutoScrollbar, FoldingCode, ContextMenu
 from tkinter import ttk 
+
+from typing import Any
+
 class Editor(Frame):
     def __init__(self, master, **kwarg):
         """
@@ -47,9 +50,12 @@ class Editor(Frame):
         self.folding_code.attach(self.text)
 
 
-        trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
-        thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
-        hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
+        # trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
+        # thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
+        # hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
+        trough_color: str = kwarg.get('scrollbg') or self.text.cget('bg')
+        thumb_color: str  = kwarg.get('thumbbg')  or "#5b5b5b"
+        hover_color: str  = kwarg.get('activescrollbg') or self.text.cget('bg')
         self.create_scrollbar_style("Custom.Vertical.TScrollbar",trough_color=trough_color, thumb_color=thumb_color,hover_color=hover_color)
         self.create_scrollbar_style("Custom.Horizontal.TScrollbar",trough_color=trough_color, thumb_color=thumb_color,hover_color=hover_color)
 
@@ -94,7 +100,7 @@ class Editor(Frame):
                 ],
                 'sticky': 'ns'
             })
-        ])
+        ]) # type: ignore[arg-type]
         self.style.layout('Custom.Horizontal.TScrollbar', [
             ('Horizontal.Scrollbar.trough', {
                 'children': [
@@ -102,7 +108,7 @@ class Editor(Frame):
                 ],
                 'sticky': 'ew'
             })
-        ])
+        ]) # type: ignore[arg-type]
 
     def debounce(self, widget, attr_name, delay, callback):
         after_id = getattr(widget, attr_name, None)
@@ -141,11 +147,11 @@ class Editor(Frame):
         self.text.bind("<Tab>", self.text._handle_tab, add="+")
 
         ### --- Current Line Highlight --- ###
-        def highlight_line():
-            self.debounce(self.text, "_linecolor_after", 50, self.text.set_current_line_color)
+        # def highlight_line():
+        #     self.debounce(self.text, "_linecolor_after", 50, self.text.set_current_line_color)
 
-        self.text.bind("<Key>", lambda e: highlight_line(), add="+")
-        self.text.bind("<Button-1>", lambda e: highlight_line(), add="+")
+        self.text.bind("<Key>", lambda e: self.text.set_current_line_color(), add="+")
+        self.text.bind("<Button-1>", lambda e: self.text.set_current_line_color(), add="+")
         self.text.bind("<B1-Motion>", lambda e: self.text.tag_remove('current_line', '1.0', 'end'), add="+")
 
         
@@ -153,6 +159,11 @@ class Editor(Frame):
         if kwarg.get('indentationguide', False):
             self.folding_code.bind("<Button-1>", lambda e: self.text.indentationguide.schedule_draw(), add="+")
 
+    def line_number_config(self, **kwargs):
+        self.line_number.configure(**kwargs)
+    
+    def folding_code_config(self, **kwargs):
+        self.folding_code.configure(**kwargs)
 
     def configure(self, **kwarg):
         super().configure(**{k:v for k, v in kwarg.items() if k in Frame().keys()})
@@ -169,8 +180,8 @@ class Editor(Frame):
                 self.folding_code.grid_remove()
 
         self.text.configure(**kwarg)
-        self.line_number.configure(**kwarg)
-        self.folding_code.configure(**kwarg)
+        self.line_number.configure(**{k:v for k, v in kwarg.items() if k in Canvas().keys()})
+        self.folding_code.configure(**{k:v for k, v in kwarg.items() if k in Canvas().keys()})
 
         if  'indent_line_color' in kwarg.keys():
             self.text.indentationguide.set_color(kwarg.get('indent_line_color', '#4b4b4b'))
@@ -181,9 +192,13 @@ class Editor(Frame):
         if 'bracket_tracker_color' in kwarg.keys():
             self.text.bracket_tracker.set_color(kwarg.get('bracket_tracker_color','lightblue'))
 
-        trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
-        thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
-        hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
+        # trough_color = kwarg.get('scrollbg') if kwarg.get('scrollbg') else self.text.cget('bg')
+        # thumb_color = kwarg.get('thumbbg') if kwarg.get('thumbbg') else "#5b5b5b"
+        # hover_color = kwarg.get('activescrollbg') if kwarg.get('activescrollbg') else self.text.cget('bg')
+        thumb_color = str(kwarg.get('thumbbg') or "#5b5b5b")
+        trough_color = str(kwarg.get('scrollbg') or self.text.cget('bg'))
+        hover_color = str(kwarg.get('activescrollbg') or self.text.cget('bg'))
+
         self.create_scrollbar_style("Custom.Vertical.TScrollbar",
                                        trough_color=trough_color, 
                                        thumb_color=thumb_color,
@@ -197,16 +212,31 @@ class Editor(Frame):
     config = configure
 
     
-    def bind(self, sequence=None, func=None, add=None):
-        self.text.bind(sequence, func, add)
-    def get_context_menu(self):
+    def bind(self, widget='editor', sequence=None, func=None, add=None):
+        if widget.lower() == ' text':
+            self.text.bind(sequence, func, add)
+        elif widget.lower() == 'line_number':
+            self.line_number.bind(sequence, func, add)
+        elif widget.lower() == 'folding_code':
+            self.folding_code.bind(sequence, func, add)
+        elif widget.lower() == 'editor':
+            super().bind(sequence, func, add)
+
+    def get_context_menu(self) -> ContextMenu:
         """Return the context menu for the editor."""
-        return self.text.context_menu.get_popup_menu()
+        return self.context_menu
     
-    def get_content(self, condition:str):
+    def get_content(self, condition:str) -> Any:
         if condition.lower().strip() == "all":
             return self.text.get_all_content()
         elif condition.lower().strip() == "visible":
             return self.text.get_visible_content()
+        
     def get_text_widget(self):
         return self.text
+    
+    def get_line_number_widget(self) -> LineNumber:
+        return self.line_number
+    
+    def get_folding_code_widget(self) -> FoldingCode:
+        return self.folding_code

@@ -9,6 +9,7 @@ class BaseLexer:
             # ---------- Core ----------
             "ident":        {"foreground":"#000000"},  # default text / variables
             "keyword":      {"foreground":"#ff4791"},  # bright pink / for keywords like if, else, return
+            "builtin":      {"foreground":"#4d79ff"},
             "function":     {"foreground":"#4d79ff"},  # function names
             "class":        {"foreground":"#ad6cff"},  # class names
             "operator":     {"foreground":"#ff8c42"},  # + - * / = etc
@@ -32,8 +33,12 @@ class BaseLexer:
             
         }
     
-    def set_styles(self, styles:dict):
+    def set_styles(self, styles=None, **kwargs):
+        if styles is None:
+            styles = {}
+        styles.update(kwargs)
         self.styles = styles
+
 
     def get_styles(self):
         if hasattr(self, "styles"):

@@ -1,4 +1,4 @@
-from tkeditor.Lexers.baselexer import BaseLexer
+from tkeditor.lexers.baselexer import BaseLexer
 import re
 
 class YAMLLexer(BaseLexer):

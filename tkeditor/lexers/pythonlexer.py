@@ -1,123 +1,117 @@
-from tkeditor.Lexers.baselexer import BaseLexer
+from tkeditor.lexers.baselexer import BaseLexer
 import keyword
-import tokenize, io
+import tokenize
+import io
+import builtins
+import types
 
-PYTHON_KEYWORDS = set(keyword.kwlist + [
-    "self", "cls"])
+PYTHON_KEYWORDS = {*keyword.kwlist, "self", "cls"}
+
+BUILTIN_VALUES = {
+    name for name in dir(builtins)
+    if not name.startswith('__')                        # remove dunder
+    and (
+        not callable(getattr(builtins, name))           # constants
+        or isinstance(getattr(builtins, name), type)    # types/classes
+        or isinstance(getattr(builtins, name), types.ModuleType) # modules
+    )
+}
 
 
 class PythonLexer(BaseLexer):
-
     name = "python"
     file_extensions = ["py"]
+
     def __init__(self):
         super().__init__()
-        self.identifiers = set()
-    def lex(self, text):
 
+    def lex(self, text):
         tokens = []
-        src = io.StringIO(text)
+        readline = io.StringIO(text).readline
 
         prev_tok = None
-        prev_tok_is_decorator = False  # initialize here!
-        in_fstring = False
-        store_word = []
-        
+        prev_is_decorator = False
 
         try:
-            for tok in tokenize.generate_tokens(src.readline):
-
+            for tok in tokenize.generate_tokens(readline):
                 ttype = tok.type
-                tstr  = tok.string
+                tstr = tok.string
 
-                sline, scol = tok.start
-                eline, ecol = tok.end
+                # ------------------------------------------------
+                # STRINGS / COMMENTS / NUMBERS
+                # ------------------------------------------------
+                if ttype in (tokenize.STRING,
+                             tokenize.FSTRING_START,
+                             tokenize.FSTRING_MIDDLE,
+                             tokenize.FSTRING_END):
+                    tokens.append(("string",
+                                   f"{tok.start[0]}.{tok.start[1]}",
+                                   f"{tok.end[0]}.{tok.end[1]}"))
 
-                start = f"{sline}.{scol}"
-                end   = f"{eline}.{ecol}"
-
-                # ====================================================
-                # 1) BASIC TOKENS
-                # ====================================================
-                # -------------------------------
-                # f-string handling
-                # -------------------------------
-                if ttype == tokenize.FSTRING_START:
-                    tokens.append(("string", start, end))
-                    in_fstring = True
-
-                elif ttype == tokenize.FSTRING_MIDDLE:
-                    # The literal parts between {…} are string
-                    # Expressions inside {} are separate tokens
-                    if "{" in tstr or "}" in tstr:
-                        tokens.append(("f_expr", start, end))
-                    else:
-                        tokens.append(("string", start, end))
-
-                elif ttype == tokenize.FSTRING_END:
-                    tokens.append(("string", start, end))
-                    in_fstring = False
-                    
-                if ttype == tokenize.STRING:
-                    tokens.append(("string", start, end))
                 elif ttype == tokenize.COMMENT:
-                    tokens.append(("comment", start, end))
+                    tokens.append(("comment",
+                                   f"{tok.start[0]}.{tok.start[1]}",
+                                   f"{tok.end[0]}.{tok.end[1]}"))
 
                 elif ttype == tokenize.NUMBER:
-                    tokens.append(("number", start, end))
+                    tokens.append(("number",
+                                   f"{tok.start[0]}.{tok.start[1]}",
+                                   f"{tok.end[0]}.{tok.end[1]}"))
 
+                # ------------------------------------------------
+                # KEYWORDS
+                # ------------------------------------------------
                 elif tstr in PYTHON_KEYWORDS:
-                    tokens.append(("keyword", start, end))
+                    tokens.append(("keyword",
+                                   f"{tok.start[0]}.{tok.start[1]}",
+                                   f"{tok.end[0]}.{tok.end[1]}"))
+                
+                elif tstr in BUILTIN_VALUES:
+                    tokens.append(("builtin",
+                                   f"{tok.start[0]}.{tok.start[1]}",
+                                   f"{tok.end[0]}.{tok.end[1]}"))
 
+                # ------------------------------------------------
+                # OPERATORS
+                # ------------------------------------------------
                 elif ttype == tokenize.OP:
                     if tstr == "@":
-                        prev_tok_is_decorator = True
-                        tokens.append(("operator", start, end))
-                    else:
-                        tokens.append(("operator", start, end))
+                        prev_is_decorator = True
 
+                    tokens.append(("operator",
+                                   f"{tok.start[0]}.{tok.start[1]}",
+                                   f"{tok.end[0]}.{tok.end[1]}"))
+
+                    # function call detection: name (
+                    if (prev_tok and
+                        prev_tok.type == tokenize.NAME and
+                        prev_tok.string not in PYTHON_KEYWORDS and
+                        tstr == "(" and
+                        prev_tok.start[0] == tok.start[0]):
+
+                        tokens.append(("function",
+                                       f"{prev_tok.start[0]}.{prev_tok.start[1]}",
+                                       f"{prev_tok.end[0]}.{prev_tok.end[1]}"))
+
+                # ------------------------------------------------
+                # IDENTIFIERS
+                # ------------------------------------------------
                 elif ttype == tokenize.NAME:
-                    
-                    if prev_tok_is_decorator:
-                        tokens.append(("decorator", f"{sline}.{scol}", f"{eline}.{ecol}"))
-                        prev_tok_is_decorator = False
+                    if prev_is_decorator:
+                        tokens.append(("decorator",
+                                       f"{tok.start[0]}.{tok.start[1]}",
+                                       f"{tok.end[0]}.{tok.end[1]}"))
+                        prev_is_decorator = False
                     else:
-                        tokens.append(("ident", start, end))
-                        
-                        
-                        
+                        tokens.append(("ident",
+                                       f"{tok.start[0]}.{tok.start[1]}",
+                                       f"{tok.end[0]}.{tok.end[1]}"))
 
-                
-                # ====================================================
-                # 2) CLASS NAME DETECTION: class NAME
-                # ====================================================
-                if (
-                    prev_tok and
-                    prev_tok.string == "class" and
-                    ttype == tokenize.NAME
-                ):
-                    tokens.append(("class", start, end))
-
-
-                # ====================================================
-                # 3) FUNCTION CALL DETECTION: name (
-                #    FIXED: do NOT mark keywords as functions
-                #    FIXED: do NOT mark inside strings/comments
-                # ====================================================
-                if (
-                    prev_tok and
-                    prev_tok.type == tokenize.NAME and
-                    prev_tok.string not in PYTHON_KEYWORDS and  # IMPORTANT FIX
-                    ttype == tokenize.OP and
-                    tstr == "("
-                ):
-                    # mark prev token as function
-                    # fname_start = f"{prev_tok.start[0]}.{prev_tok.start[1]}"
-                    # fname_end   = f"{prev_tok.end[0]}.{prev_tok.end[1]}"
-                    # tokens.append(("function", fname_start, fname_end))
-                    # skip if prev_tok is decorator (@name)
-                    if prev_tok.start[0] == tok.start[0]:  # same line as '('
-                        tokens.append(("function", f"{prev_tok.start[0]}.{prev_tok.start[1]}", f"{prev_tok.end[0]}.{prev_tok.end[1]}"))
+                    # class NAME
+                    if prev_tok and prev_tok.string == "class":
+                        tokens.append(("class",
+                                       f"{tok.start[0]}.{tok.start[1]}",
+                                       f"{tok.end[0]}.{tok.end[1]}"))
 
                 prev_tok = tok
 
@@ -125,4 +119,3 @@ class PythonLexer(BaseLexer):
             pass
 
         return tokens
-

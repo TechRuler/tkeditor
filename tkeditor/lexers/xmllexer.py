@@ -1,4 +1,4 @@
-from tkeditor.Lexers.baselexer import BaseLexer
+from tkeditor.lexers.baselexer import BaseLexer
 import re
 
 class XMLLexer(BaseLexer):
@@ -11,7 +11,7 @@ class XMLLexer(BaseLexer):
     STRING_RE = re.compile(r'"(\\.|[^"])*"|\'(\\.|[^\'])*\'')
     COMMENT_RE = re.compile(r'<!--(.*?)-->')
 
-    def set_style(self, style:dict) -> dict:
+    def set_style(self, style:dict) -> None:
         self.style = style
 
     def lex(self, text):

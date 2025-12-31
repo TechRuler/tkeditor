@@ -63,6 +63,7 @@ class CustomText(Text):
                 self.indentationguide.remove_indentationguide()
 
     def brackets_and_string_complete(self, event):
+        self.set_current_line_color()
         char = event.char
         brackets = {"[":"]","(":")","{":"}","'":"'",'"':'"'}
         if char in brackets.keys():

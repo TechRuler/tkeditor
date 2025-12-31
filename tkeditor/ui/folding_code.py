@@ -1,4 +1,4 @@
-from tkinter import Canvas, TclError
+from tkinter import Canvas, TclError, Text
 from tkeditor.utils import get_font
 class FoldingCode(Canvas):
     def __init__(self, master=None, **kwargs):
@@ -9,12 +9,13 @@ class FoldingCode(Canvas):
             bg=kwargs.get('folding_bg', self.cget('background') or self.cget('bg')),
             highlightthickness=0
         )
-        self.text_widget = None
+        self.text_widget:Text
         self.folded_blocks = {}  
         self.tag_prefix = "folded_"
         self.font = get_font(kwargs.get('font', ('Consolas', 14)))
         self.fg = kwargs.get('folding_arrow_color', kwargs.get('fg', '#000000'))
         self.width = kwargs.get('width')
+        self.symbols = ["❯","∨"]
         
     def set_color(self, color):
         """Set the color for folding code."""
@@ -66,14 +67,14 @@ class FoldingCode(Canvas):
                 folded = lineno in self.folded_blocks
                 try:
                     # test if font supports arrow
-                    symbol = "❯" if folded else "∨"
+                    symbol = self.symbols[0] if folded else self.symbols[1]
                 except:
                     symbol = "+" if folded else "-"
                 self.create_text(x, y, text=symbol, anchor="nw", font=self.font, fill=self.fg, tags=("folding_line", f"line_{lineno}"))
 
             index = self.text_widget.index(f"{index}+1line")
         # Adjust gutter width if needed
-        required_width = 1 * self.font.measure("M") + 10
+        required_width = max(len(self.symbols[0]), len(self.symbols[1])) * self.font.measure("M") + 10
         if required_width != self.width:
             self.width = required_width
             self.config(width=self.width)
@@ -144,3 +145,19 @@ class FoldingCode(Canvas):
 
     def _get_indent(self, line):
         return len(line) - len(line.lstrip(" "))
+    
+    def configure(self, **kwargs):
+        super().configure(**{k:v for k, v in kwargs.items() if k in Canvas().keys()})
+
+        if 'font' in kwargs:
+            self.font = get_font(kwargs.get('font'))
+            self.itemconfig("folding_line", font=self.font)
+        
+        if 'fg' in kwargs:
+            self.fg =  kwargs.get('fg', kwargs.get('fg', '#000000'))
+            self.set_color(self.fg)
+
+        self.symbols = list(kwargs["symbols"]) if isinstance(kwargs.get("symbols"), (list, tuple)) else ["❯","∨"]
+
+        
+        self._schedule_draw()

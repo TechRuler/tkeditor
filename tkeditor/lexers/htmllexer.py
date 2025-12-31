@@ -1,6 +1,6 @@
-from tkeditor.Lexers.baselexer import BaseLexer
-from tkeditor.Lexers.csslexer import CSSLexer
-from tkeditor.Lexers.jslexer import JavaScriptLexer
+from tkeditor.lexers.baselexer import BaseLexer
+from tkeditor.lexers.csslexer import CSSLexer
+from tkeditor.lexers.jslexer import JavaScriptLexer
 import re
 
 HTML_KEYWORDS = { "html","head","body","title","meta","link","script","style","div","span", ... }

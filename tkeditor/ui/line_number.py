@@ -1,4 +1,4 @@
-from tkinter import Canvas
+from tkinter import Canvas, Text
 from tkeditor.utils import get_font
 
 class LineNumber(Canvas):
@@ -7,7 +7,7 @@ class LineNumber(Canvas):
         super().__init__(master, **{k:v for k, v in kwarg.items() if k in Allowed_keys})
         self.master = master
         self.kwarg = kwarg
-        self.text_widget = None
+        self.text_widget:Text 
         self.fill = kwarg.get('line_number_fg','black')
         self.font = get_font(kwarg.get('font',("TkDefaultFont",9)))
         self.width = kwarg.get('lineboxwidth', 55)
@@ -15,12 +15,21 @@ class LineNumber(Canvas):
 
         self.char_width = self.font.measure('M')
 
-        self.config(width=self.width, 
-                    bg=kwarg.get("line_number_bg") if kwarg.get("line_number_bg") else kwarg.get('bg') or kwarg.get("background")
-                    )
+        self.config(
+            highlightthickness=0,
+            width=self.width,
+            bg=(
+                kwarg.get("line_number_bg")
+                or kwarg.get("bg")
+                or kwarg.get("background")
+                or "#ffffff"
+            ),
+        )
+
         self.fill = kwarg.get("line_number_fg") if kwarg.get("line_number_fg") else kwarg.get("fg") or kwarg.get("foreground")
     def schedule_redraw(self,event=None):
         self.text_widget.after_idle(self.refresh_lines)
+        
     def attach(self, text_widget):
         self.text_widget = text_widget
 
@@ -47,9 +56,9 @@ class LineNumber(Canvas):
 
         for y in sorted(y_to_line):
             lineno = y_to_line[y]
-            color = self.fill
+            color: str = self.fill or "#888888"
             if lineno == self.text_widget.index("insert").split('.')[0]:
-                color = self.current_line_number
+                color = self.current_line_number or color
             max_digits = max(max_digits, len(lineno))
             x = self.width - len(lineno) * char_width - 5
             self.create_text(x, y, anchor='nw', text=lineno,
@@ -65,6 +74,13 @@ class LineNumber(Canvas):
 
 
     def configure(self, **kwarg):
-        super().configure(**kwarg)
-        if "line_number_fg" in kwarg:
-            self.itemconfigure("line_number", fill=self.kwarg.get("line_number_fg"))
+        super().configure(**{k:v for k, v in kwarg.items() if k in Canvas().keys()})
+        if "fg" in kwarg:
+            self.fill = kwarg.get("fg")
+            self.itemconfigure("line_number", fill=kwarg.get("fg"))
+        if 'current_line_number' in kwarg:
+            self.current_line_number = kwarg.get('current_line_number')
+        if 'font' in kwarg:
+            self.font = get_font(kwarg.get('font'))
+            self.itemconfig("line_number", font=self.font)
+        
